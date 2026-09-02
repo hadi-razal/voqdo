@@ -7,7 +7,7 @@ export default function WorkItemCard() {
             <Pressable>
                 <Text style={styles.title}>Work Item Card</Text>
                 <Text style={styles.description}>This si the description of the work item card</Text>
-                <Text style={styles.description}>This is the description of the work item card</Text>
+                <Text style={styles.description}>Date: 2026-01-01</Text>
             </Pressable>
         </View>
     )
@@ -18,7 +18,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'gray/50',
         width: '100%',
         borderRadius: 10,
-        marginVertical: 10,
+        marginVertical: 3,
         padding: 10,
         justifyContent: 'center',
         alignItems: 'center',
