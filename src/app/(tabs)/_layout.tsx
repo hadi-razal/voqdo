@@ -7,24 +7,25 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: 'Today',
           tabBarIcon: ({ color, size }) => (
             <SymbolView
-              name={{ ios: 'house.fill', android: 'home', web: 'home' }}
+              name={{ ios: 'sun.max.fill', android: 'sunny', web: 'sunny' }}
               tintColor={color}
               size={size}
             />
           ),
         }}
       />
+
       <Tabs.Screen
-        name="schedule"
+        name="works"
         options={{
           headerShown: false,
-          title: 'Schedule',
+          title: 'Works',
           tabBarIcon: ({ color, size }) => (
             <SymbolView
-              name={{ ios: 'calendar', android: 'calendar_month', web: 'calendar_month' }}
+              name={{ ios: 'briefcase.fill', android: 'work', web: 'work' }}
               tintColor={color}
               size={size}
             />
@@ -35,11 +36,10 @@ export default function TabLayout() {
       <Tabs.Screen
         name="settings"
         options={{
-          headerShown: false,
-          title: 'Settings',
+          title: 'Profile',
           tabBarIcon: ({ color, size }) => (
             <SymbolView
-              name={{ ios: 'gearshape.fill', android: 'settings', web: 'settings' }}
+              name={{ ios: 'person.crop.circle.fill', android: 'account_circle', web: 'account_circle' }}
               tintColor={color}
               size={size}
             />
@@ -47,5 +47,5 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
-  )
+  );
 }

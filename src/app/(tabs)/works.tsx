@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import WorkItemCard from '../../../components/workItemCard';
 
 export default function Explore() {
 
@@ -8,11 +9,21 @@ export default function Explore() {
   return (
     <View style={styles.container}>
       <View style={styles.search_bar_container}>
-        <Text style={styles.heading}>Your Works</Text>
         <TextInput value={search} onChangeText={setSearch} placeholder="Search for a work" style={styles.input} />
         <Pressable style={styles.search_button} onPress={() => { setSearch('') }}>
           <Text style={styles.search_button_text}>Search</Text>
         </Pressable>
+
+        <ScrollView style={styles.works_list_container}>
+          <WorkItemCard />
+          <WorkItemCard />
+          <WorkItemCard />
+          <WorkItemCard />
+          <WorkItemCard />
+          <WorkItemCard />
+          <WorkItemCard />
+        </ScrollView>
+
       </View>
 
     </View>
@@ -23,14 +34,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: 100,
-    marginHorizontal: 20,
+    marginHorizontal: 10,
     alignItems: 'center',
     justifyContent: 'flex-start',
-  },
-  heading: {
-    color: 'blue',
-    fontSize: 24,
-    fontWeight: 'bold',
   },
   search_bar_container: {
     width: '100%',
@@ -65,4 +71,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     backgroundColor: 'gray/20',
   },
+  works_list_container: {
+    width: '100%',
+  }
 });
