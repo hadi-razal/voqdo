@@ -73,5 +73,8 @@ const styles = StyleSheet.create({
   },
   works_list_container: {
     width: '100%',
+    gap: 20,
+    display: 'flex',
+    flexDirection: 'column',
   }
 });

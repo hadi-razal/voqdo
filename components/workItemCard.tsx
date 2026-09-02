@@ -15,10 +15,11 @@ export default function WorkItemCard() {
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: 'red',
+        backgroundColor: 'gray/50',
         width: '100%',
-        height: 200,
         borderRadius: 10,
+        marginVertical: 10,
+        padding: 10,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 1,
