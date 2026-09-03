@@ -34,12 +34,13 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-        name="settings"
+        name="profile"
         options={{
-          title: 'Profile',
+          headerShown: false,
+          title: 'Settings',
           tabBarIcon: ({ color, size }) => (
             <SymbolView
-              name={{ ios: 'person.crop.circle.fill', android: 'account_circle', web: 'account_circle' }}
+              name={{ ios: 'gearshape.fill', android: 'settings', web: 'settings' }}
               tintColor={color}
               size={size}
             />

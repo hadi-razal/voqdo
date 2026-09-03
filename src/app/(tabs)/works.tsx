@@ -25,6 +25,13 @@ export default function Explore() {
           <WorkItemCard />
           <WorkItemCard />
           <WorkItemCard />
+          <WorkItemCard />
+          <WorkItemCard />
+          <WorkItemCard />
+          <WorkItemCard />
+          <WorkItemCard />
+          <WorkItemCard />
+
         </ScrollView>
 
       </View>
