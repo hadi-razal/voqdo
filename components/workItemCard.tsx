@@ -1,18 +1,13 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import type { WorkItem } from '../src/data/tasks';
 
-export type WorkItem = {
-  id: number;
-  title: string;
-  description: string;
-  date: string;
-  time: string;
-};
+export type { WorkItem };
 
 export default function WorkItemCard({ data }: { data: WorkItem }) {
   return (
     <Pressable style={({ pressed }) => [styles.container, pressed && styles.pressed]}>
       <Text style={styles.title}>{data.title}</Text>
-      <Text style={styles.description}>{data.description}</Text>
+      {data.description ? <Text style={styles.description}>{data.description}</Text> : null}
       <View style={styles.date_container}>
         <Text style={styles.date}>{data.time}</Text>
         <Text style={styles.date}>{data.date}</Text>

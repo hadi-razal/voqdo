@@ -1,33 +1,25 @@
 import { useState, type ReactNode } from 'react';
-import { SymbolView, type AndroidSymbol, type SFSymbol } from 'expo-symbols';
+import { SymbolView } from 'expo-symbols';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-function Icon({
-  ios,
-  android,
-  size = 18,
-  color = '#2563EB',
-}: {
-  ios: SFSymbol;
-  android: AndroidSymbol;
-  size?: number;
-  color?: string;
-}) {
-  return <SymbolView name={{ ios, android, web: android }} size={size} tintColor={color} />;
+function Chevron() {
+  return (
+    <SymbolView
+      name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
+      size={14}
+      tintColor="#C4C9D2"
+    />
+  );
 }
 
 function SettingsRow({
-  ios,
-  android,
   label,
   value,
   onPress,
   trailing,
   last,
 }: {
-  ios: SFSymbol;
-  android: AndroidSymbol;
   label: string;
   value?: string;
   onPress?: () => void;
@@ -36,15 +28,10 @@ function SettingsRow({
 }) {
   const content = (
     <View style={[styles.row, !last && styles.rowBorder]}>
-      <View style={styles.rowIcon}>
-        <Icon ios={ios} android={android} />
-      </View>
       <Text style={styles.rowLabel}>{label}</Text>
       {value ? <Text style={styles.rowValue}>{value}</Text> : null}
       {trailing}
-      {onPress && !trailing ? (
-        <Icon ios="chevron.right" android="chevron_right" size={14} color="#9CA3AF" />
-      ) : null}
+      {onPress && !trailing ? <Chevron /> : null}
     </View>
   );
 
@@ -59,6 +46,23 @@ function SettingsRow({
   return content;
 }
 
+function PreferenceSwitch({
+  value,
+  onValueChange,
+}: {
+  value: boolean;
+  onValueChange: (next: boolean) => void;
+}) {
+  return (
+    <Switch
+      value={value}
+      onValueChange={onValueChange}
+      trackColor={{ false: '#E5E7EB', true: '#93C5FD' }}
+      thumbColor={value ? '#2563EB' : '#F9FAFB'}
+    />
+  );
+}
+
 export default function Profile() {
   const [reminders, setReminders] = useState(true);
   const [showCompleted, setShowCompleted] = useState(true);
@@ -67,95 +71,43 @@ export default function Profile() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <Text style={styles.screenTitle}>Settings</Text>
+        <Text style={styles.screenTitle}>Profile</Text>
 
-        <Pressable style={({ pressed }) => [styles.accountCard, pressed && styles.pressed]}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarInitials}>JD</Text>
+        <View style={styles.identity}>
+          <View style={styles.avatarRing}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarInitials}>JD</Text>
+            </View>
           </View>
-          <View style={styles.accountCopy}>
-            <Text style={styles.name}>John Doe</Text>
-            <Text style={styles.email}>john.doe@example.com</Text>
-          </View>
-          <Icon ios="chevron.right" android="chevron_right" size={14} color="#9CA3AF" />
-        </Pressable>
-
-        <Text style={styles.sectionLabel}>Tasks</Text>
-        <View style={styles.card}>
-          <SettingsRow
-            ios="bell.fill"
-            android="notifications"
-            label="Due date reminders"
-            trailing={
-              <Switch
-                value={reminders}
-                onValueChange={setReminders}
-                trackColor={{ false: '#E5E7EB', true: '#93C5FD' }}
-                thumbColor={reminders ? '#2563EB' : '#F9FAFB'}
-              />
-            }
-          />
-          <SettingsRow
-            ios="checkmark.circle.fill"
-            android="check_circle"
-            label="Show completed"
-            trailing={
-              <Switch
-                value={showCompleted}
-                onValueChange={setShowCompleted}
-                trackColor={{ false: '#E5E7EB', true: '#93C5FD' }}
-                thumbColor={showCompleted ? '#2563EB' : '#F9FAFB'}
-              />
-            }
-          />
-          <SettingsRow
-            ios="list.bullet"
-            android="format_list_bulleted"
-            label="Default list"
-            value="Inbox"
-            onPress={() => {}}
-            last
-          />
+          <Text style={styles.name}>John Doe</Text>
+          <Text style={styles.email}>john.doe@example.com</Text>
         </View>
 
-        <Text style={styles.sectionLabel}>Appearance</Text>
+        <Text style={styles.sectionLabel}>Preferences</Text>
         <View style={styles.card}>
           <SettingsRow
-            ios="moon.fill"
-            android="dark_mode"
+            label="Due date reminders"
+            trailing={<PreferenceSwitch value={reminders} onValueChange={setReminders} />}
+          />
+          <SettingsRow
+            label="Show completed"
+            trailing={<PreferenceSwitch value={showCompleted} onValueChange={setShowCompleted} />}
+          />
+          <SettingsRow label="Default list" value="Inbox" onPress={() => {}} />
+          <SettingsRow
             label="Dark mode"
-            trailing={
-              <Switch
-                value={darkMode}
-                onValueChange={setDarkMode}
-                trackColor={{ false: '#E5E7EB', true: '#93C5FD' }}
-                thumbColor={darkMode ? '#2563EB' : '#F9FAFB'}
-              />
-            }
+            trailing={<PreferenceSwitch value={darkMode} onValueChange={setDarkMode} />}
             last
           />
         </View>
 
         <Text style={styles.sectionLabel}>Support</Text>
         <View style={styles.card}>
-          <SettingsRow
-            ios="questionmark.circle.fill"
-            android="help"
-            label="Help & feedback"
-            onPress={() => {}}
-          />
-          <SettingsRow
-            ios="info.circle.fill"
-            android="info"
-            label="About Voqdo"
-            value="1.0.0"
-            onPress={() => {}}
-            last
-          />
+          <SettingsRow label="Help & feedback" onPress={() => {}} />
+          <SettingsRow label="About Voqdo" value="1.0.0" onPress={() => {}} last />
         </View>
 
         <Pressable style={({ pressed }) => [styles.signOut, pressed && styles.pressed]}>
-          <Icon ios="rectangle.portrait.and.arrow.right" android="logout" size={18} color="#DC2626" />
           <Text style={styles.signOutText}>Sign out</Text>
         </Pressable>
       </ScrollView>
@@ -177,44 +129,47 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#111827',
     letterSpacing: -0.4,
-    marginBottom: 20,
     marginTop: 4,
   },
-  accountCard: {
-    flexDirection: 'row',
+  identity: {
     alignItems: 'center',
+    paddingTop: 28,
+    paddingBottom: 32,
+  },
+  avatarRing: {
+    width: 92,
+    height: 92,
+    borderRadius: 46,
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#E5E7EB',
-    marginBottom: 24,
-    gap: 12,
   },
   avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: '#DBEAFE',
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarInitials: {
-    fontSize: 18,
+    fontSize: 28,
     fontWeight: '700',
     color: '#1D4ED8',
-  },
-  accountCopy: {
-    flex: 1,
+    letterSpacing: -0.4,
   },
   name: {
-    fontSize: 17,
-    fontWeight: '600',
+    marginTop: 14,
+    fontSize: 22,
+    fontWeight: '700',
     color: '#111827',
+    letterSpacing: -0.3,
   },
   email: {
-    marginTop: 2,
-    fontSize: 13,
+    marginTop: 4,
+    fontSize: 15,
     color: '#6B7280',
   },
   sectionLabel: {
@@ -231,28 +186,20 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     borderColor: '#E5E7EB',
-    marginBottom: 20,
+    marginBottom: 24,
     overflow: 'hidden',
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     gap: 12,
     minHeight: 52,
   },
   rowBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-  },
-  rowIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: '#EFF6FF',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#E5E7EB',
   },
   rowLabel: {
     flex: 1,
@@ -261,18 +208,11 @@ const styles = StyleSheet.create({
   },
   rowValue: {
     fontSize: 15,
-    color: '#6B7280',
+    color: '#9CA3AF',
   },
   signOut: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    paddingVertical: 14,
-    borderWidth: 1,
-    borderColor: '#FECACA',
+    paddingVertical: 8,
   },
   signOutText: {
     fontSize: 16,
