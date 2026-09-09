@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { SymbolView } from 'expo-symbols';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '@/context/auth';
 
 function Chevron() {
   return (
@@ -63,10 +64,19 @@ function PreferenceSwitch({
   );
 }
 
+function initialsFor(name?: string, login?: string) {
+  const parts = name?.trim().split(/\s+/).filter(Boolean) ?? [];
+  if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  if (parts[0] && parts[0].length >= 2) return parts[0].slice(0, 2).toUpperCase();
+  return (login ?? 'V').slice(0, 2).toUpperCase();
+}
+
 export default function Profile() {
+  const { signOut, user } = useAuth();
   const [reminders, setReminders] = useState(true);
   const [showCompleted, setShowCompleted] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
+  const initials = initialsFor(user?.name, user?.login);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -76,11 +86,11 @@ export default function Profile() {
         <View style={styles.identity}>
           <View style={styles.avatarRing}>
             <View style={styles.avatar}>
-              <Text style={styles.avatarInitials}>JD</Text>
+              <Text style={styles.avatarInitials}>{initials}</Text>
             </View>
           </View>
-          <Text style={styles.name}>John Doe</Text>
-          <Text style={styles.email}>john.doe@example.com</Text>
+          <Text style={styles.name}>{user?.name || 'Voqdo user'}</Text>
+          <Text style={styles.email}>{user?.login || 'Not signed in'}</Text>
         </View>
 
         <Text style={styles.sectionLabel}>Preferences</Text>
@@ -107,7 +117,7 @@ export default function Profile() {
           <SettingsRow label="About Voqdo" value="1.0.0" onPress={() => {}} last />
         </View>
 
-        <Pressable style={({ pressed }) => [styles.signOut, pressed && styles.pressed]}>
+        <Pressable onPress={signOut} style={({ pressed }) => [styles.signOut, pressed && styles.pressed]}>
           <Text style={styles.signOutText}>Sign out</Text>
         </Pressable>
       </ScrollView>
