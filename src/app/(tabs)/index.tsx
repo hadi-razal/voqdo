@@ -1,368 +1,273 @@
-import { useMemo, useState } from 'react';
-import { SymbolView } from 'expo-symbols';
-import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import TodayTaskCard from '../../../components/todayTaskCard';
-import { useTasks } from '@/context/tasks';
-import { formatClockTime, formatDayLabel, isoDate, timeToMinutes } from '@/data/tasks';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Body, Caption, Card, Display, Screen } from '@/components/vq';
+import { useJournal, type WeekDay } from '@/context/journal';
+import { ChartIcon, GridIcon, Icon, type IconName } from '@/icons';
+import { colors, font, glowShadow, gutter, journalCard, pressedOpacity, radius } from '@/theme';
 
-export default function Today() {
-  const { tasks, addTask, toggleTask } = useTasks();
-  const [composerOpen, setComposerOpen] = useState(false);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [time, setTime] = useState(formatClockTime());
+const PROMPTS = [
+  'What made you feel grateful today?',
+  'What took more out of you than it should have?',
+  'Who was on your mind today?',
+  'What is one thing you handled well?',
+  'What would make tomorrow feel lighter?',
+  'What are you ready to let go of?',
+];
 
-  const today = isoDate(0);
-  const todaysTasks = useMemo(
-    () =>
-      tasks
-        .filter((task) => task.date === today)
-        .sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time)),
-    [tasks, today]
-  );
-  const remaining = todaysTasks.filter((task) => !task.completed);
-  const completed = todaysTasks.filter((task) => task.completed);
+const QUOTES = [
+  'A few honest lines today\ncan make a lighter tomorrow.',
+  'You do not have to solve it.\nYou only have to name it.',
+  'Small steps still move you forward.',
+];
 
-  const openComposer = () => {
-    setTitle('');
-    setDescription('');
-    setTime(formatClockTime());
-    setComposerOpen(true);
-  };
+export default function Home() {
+  const router = useRouter();
+  const { entries, settings, week } = useJournal();
+  const [promptIndex, setPromptIndex] = useState(() => new Date().getDate() % PROMPTS.length);
 
-  const closeComposer = () => {
-    setComposerOpen(false);
-  };
-
-  const submitTask = () => {
-    if (!title.trim()) return;
-    addTask({ title, description, time });
-    closeComposer();
-  };
+  const wroteToday = week.some((day) => day.isToday && day.done);
+  const quote = QUOTES[new Date().getDate() % QUOTES.length];
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <Screen contentStyle={styles.content}>
       <View style={styles.header}>
-        <View style={styles.headerCopy}>
-          <Text style={styles.screenTitle}>Today</Text>
-          <Text style={styles.dateLabel}>{formatDayLabel()}</Text>
+        <View style={{ flex: 1, gap: 6 }}>
+          <Text style={styles.greeting}>{greeting()},</Text>
+          <Display size={25}>
+            {wroteToday ? 'You showed up today ' : 'Ready when you are '}
+            <Text style={{ color: colors.accent }}>♥</Text>
+          </Display>
         </View>
-        <Pressable onPress={openComposer} style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
-          <SymbolView
-            name={{ ios: 'plus', android: 'add', web: 'add' }}
-            size={20}
-            tintColor="#FFFFFF"
-          />
-        </Pressable>
-      </View>
 
-      <View style={styles.summary}>
-        <Text style={styles.summaryText}>
-          {remaining.length} remaining
-          {completed.length > 0 ? ` · ${completed.length} done` : ''}
-        </Text>
-      </View>
-
-      <ScrollView
-        style={styles.list}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Pressable onPress={openComposer} style={({ pressed }) => [styles.quickAdd, pressed && styles.pressed]}>
-          <View style={styles.quickAddIcon}>
-            <SymbolView
-              name={{ ios: 'plus', android: 'add', web: 'add' }}
-              size={16}
-              tintColor="#2563EB"
-            />
-          </View>
-          <Text style={styles.quickAddText}>Add a task</Text>
-        </Pressable>
-
-        {todaysTasks.length === 0 ? (
-          <View style={styles.empty}>
-            <Text style={styles.emptyTitle}>Nothing planned yet</Text>
-            <Text style={styles.emptyBody}>Add a task to start today’s list.</Text>
-          </View>
-        ) : (
-          <>
-            {remaining.length > 0 ? (
-              <View style={styles.section}>
-                <Text style={styles.sectionLabel}>Up next</Text>
-                {remaining.map((task) => (
-                  <TodayTaskCard key={task.id} data={task} onToggle={() => toggleTask(task.id)} />
-                ))}
-              </View>
-            ) : (
-              <View style={styles.empty}>
-                <Text style={styles.emptyTitle}>All caught up</Text>
-                <Text style={styles.emptyBody}>Every task for today is done.</Text>
-              </View>
-            )}
-
-            {completed.length > 0 ? (
-              <View style={styles.section}>
-                <Text style={styles.sectionLabel}>Done</Text>
-                {completed.map((task) => (
-                  <TodayTaskCard key={task.id} data={task} onToggle={() => toggleTask(task.id)} />
-                ))}
-              </View>
-            ) : null}
-          </>
-        )}
-      </ScrollView>
-
-      <Modal visible={composerOpen} animationType="slide" transparent onRequestClose={closeComposer}>
-        <KeyboardAvoidingView
-          style={styles.modalRoot}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        <Pressable
+          onPress={() => router.push('/profile')}
+          accessibilityLabel="Open profile"
+          style={({ pressed }) => [styles.avatar, pressed && { opacity: pressedOpacity }]}
         >
-          <Pressable style={styles.backdrop} onPress={closeComposer} />
-          <View style={styles.sheet}>
-            <View style={styles.sheetHandle} />
-            <Text style={styles.sheetTitle}>New task</Text>
-            <TextInput
-              value={title}
-              onChangeText={setTitle}
-              placeholder="What do you need to do?"
-              placeholderTextColor="#9CA3AF"
-              style={styles.input}
-              autoFocus
-              returnKeyType="next"
-            />
-            <TextInput
-              value={description}
-              onChangeText={setDescription}
-              placeholder="Notes (optional)"
-              placeholderTextColor="#9CA3AF"
-              style={[styles.input, styles.notesInput]}
-              multiline
-            />
-            <TextInput
-              value={time}
-              onChangeText={setTime}
-              placeholder="Time"
-              placeholderTextColor="#9CA3AF"
-              style={styles.input}
-            />
-            <View style={styles.sheetActions}>
-              <Pressable onPress={closeComposer} style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]}>
-                <Text style={styles.secondaryButtonText}>Cancel</Text>
-              </Pressable>
-              <Pressable
-                onPress={submitTask}
-                disabled={!title.trim()}
-                style={({ pressed }) => [
-                  styles.primaryButton,
-                  !title.trim() && styles.primaryButtonDisabled,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <Text style={styles.primaryButtonText}>Add task</Text>
-              </Pressable>
-            </View>
+          <Text style={styles.avatarLetter}>
+            {settings.name.trim().charAt(0).toUpperCase() || 'Y'}
+          </Text>
+        </Pressable>
+      </View>
+
+      <Text style={styles.quote}>{quote}</Text>
+
+      <View style={styles.week}>
+        {week.map((day) => (
+          <DayDot key={day.key} day={day} />
+        ))}
+      </View>
+
+      <Pressable
+        onPress={() => router.push('/record')}
+        style={({ pressed }) => [pressed && { opacity: 0.9 }]}
+      >
+        <LinearGradient
+          colors={[journalCard.from, journalCard.to]}
+          style={styles.journalCard}
+          start={{ x: 0.1, y: 0 }}
+          end={{ x: 0.9, y: 1 }}
+        >
+          <View style={[styles.micRing, glowShadow(colors.accent, 'sm')]}>
+            <Icon name="mic" size={26} color={colors.accent} strokeWidth={1.6} />
           </View>
-        </KeyboardAvoidingView>
-      </Modal>
-    </SafeAreaView>
+          <Display size={22}>Tap to Journal</Display>
+          <Body style={{ textAlign: 'center' }}>Speak or type — your thoughts, your way.</Body>
+        </LinearGradient>
+      </Pressable>
+
+      <View style={styles.tiles}>
+        <ActionTile
+          label={'Voice\nJournal'}
+          bg={colors.surfaceRaised}
+          fg={colors.text}
+          icon="mic"
+          onPress={() => router.push('/record')}
+        />
+        <ActionTile
+          label={'Write\nJournal'}
+          bg="#22412F"
+          fg={colors.success}
+          icon="pencil"
+          onPress={() => router.push('/write')}
+        />
+        <ActionTile
+          label="Insights"
+          bg="#2A2C52"
+          fg="#9BA0E8"
+          onPress={() => router.navigate('/insights')}
+          render={(color) => <ChartIcon size={21} color={color} />}
+        />
+        <ActionTile
+          label="Categories"
+          bg="#33291C"
+          fg={colors.glow}
+          onPress={() => router.push('/categories')}
+          render={(color) => <GridIcon size={21} color={color} />}
+        />
+      </View>
+
+      <Card style={styles.prompt}>
+        <View style={styles.promptHead}>
+          <Icon name="clock" size={14} color={colors.muted} strokeWidth={1.7} />
+          <Text style={styles.promptTitle}>Today&rsquo;s Prompt</Text>
+          <Pressable
+            onPress={() => setPromptIndex((i) => (i + 1) % PROMPTS.length)}
+            accessibilityLabel="Show another prompt"
+            hitSlop={10}
+          >
+            <Icon name="refresh" size={15} color={colors.muted} strokeWidth={1.7} />
+          </Pressable>
+        </View>
+
+        <Pressable
+          onPress={() => router.push('/write')}
+          style={({ pressed }) => [styles.promptBody, pressed && { opacity: pressedOpacity }]}
+        >
+          <Text style={styles.promptText}>{PROMPTS[promptIndex]}</Text>
+          <Icon name="chevronRight" size={16} color={colors.faint} strokeWidth={1.7} />
+        </Pressable>
+      </Card>
+
+      {entries.length > 0 && (
+        <Caption style={styles.countLine}>
+          {entries.length} {entries.length === 1 ? 'entry' : 'entries'} so far. Keep going.
+        </Caption>
+      )}
+    </Screen>
   );
 }
 
+function DayDot({ day }: { day: WeekDay }) {
+  const border = day.isToday ? colors.glow : colors.border;
+
+  return (
+    <View style={styles.dayCol}>
+      <Text style={[styles.dayLabel, day.isToday && { color: colors.glow }]}>{day.label}</Text>
+      <View
+        style={[
+          styles.dot,
+          { borderColor: border },
+          day.done && { backgroundColor: colors.successBg, borderColor: colors.successBg },
+          day.isFuture && { opacity: 0.45 },
+        ]}
+      >
+        {day.done && <Icon name="check" size={13} color={colors.success} strokeWidth={2.4} />}
+      </View>
+    </View>
+  );
+}
+
+function ActionTile({
+  label,
+  bg,
+  fg,
+  icon,
+  onPress,
+  render,
+}: {
+  label: string;
+  bg: string;
+  fg: string;
+  icon?: IconName;
+  onPress: () => void;
+  render?: (color: string) => React.ReactNode;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.tile,
+        { backgroundColor: bg },
+        pressed && { opacity: pressedOpacity },
+      ]}
+    >
+      {render ? render(fg) : icon ? <Icon name={icon} size={21} color={fg} /> : null}
+      <Text style={styles.tileLabel} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.85}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+function greeting(date = new Date()): string {
+  const hour = date.getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#F4F5F7',
-  },
-  header: {
-    flexDirection: 'row',
+  content: { paddingHorizontal: gutter, paddingBottom: 24, gap: 16 },
+  header: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  greeting: { fontFamily: font.body, fontSize: 15, color: colors.muted },
+  avatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: colors.surfaceRaised,
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
+    justifyContent: 'center',
     marginTop: 4,
   },
-  headerCopy: {
-    flex: 1,
-    paddingRight: 12,
+  avatarLetter: { fontFamily: font.medium, fontSize: 14, color: colors.text },
+  quote: {
+    fontFamily: font.displayItalic,
+    fontStyle: 'italic',
+    fontSize: 14.5,
+    lineHeight: 22,
+    color: colors.muted,
+    marginTop: -6,
   },
-  screenTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#111827',
-    letterSpacing: -0.4,
-  },
-  dateLabel: {
-    marginTop: 2,
-    fontSize: 15,
-    color: '#6B7280',
-    fontWeight: '500',
-  },
-  addButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#2563EB',
+  week: { flexDirection: 'row', justifyContent: 'space-between' },
+  dayCol: { alignItems: 'center', gap: 8 },
+  dayLabel: { fontFamily: font.medium, fontSize: 11, color: colors.faint },
+  dot: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 1.4,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  summary: {
-    paddingHorizontal: 20,
-    marginTop: 10,
-    marginBottom: 12,
-  },
-  summaryText: {
-    fontSize: 14,
-    color: '#6B7280',
-    fontWeight: '500',
-  },
-  list: {
-    flex: 1,
-  },
-  listContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 32,
-  },
-  quickAdd: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+  journalCard: {
+    borderRadius: radius.xxl,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    paddingHorizontal: 14,
-    height: 48,
-    marginBottom: 16,
-  },
-  quickAddIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#EFF6FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  quickAddText: {
-    fontSize: 16,
-    color: '#6B7280',
-  },
-  section: {
-    marginBottom: 16,
-  },
-  sectionLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#6B7280',
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-    marginBottom: 8,
-    marginLeft: 4,
-  },
-  empty: {
-    alignItems: 'center',
-    paddingTop: 36,
-    paddingBottom: 16,
-  },
-  emptyTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#111827',
-  },
-  emptyBody: {
-    marginTop: 6,
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  modalRoot: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  backdrop: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(17, 24, 39, 0.35)',
-  },
-  sheet: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
+    borderColor: journalCard.border,
+    paddingVertical: 26,
     paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 28,
-  },
-  sheetHandle: {
-    alignSelf: 'center',
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#E5E7EB',
-    marginBottom: 14,
-  },
-  sheetTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#111827',
-    letterSpacing: -0.3,
-    marginBottom: 16,
-  },
-  input: {
-    backgroundColor: '#F4F5F7',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: '#111827',
-    marginBottom: 10,
-  },
-  notesInput: {
-    minHeight: 84,
-    textAlignVertical: 'top',
-  },
-  sheetActions: {
-    flexDirection: 'row',
+    alignItems: 'center',
     gap: 10,
-    marginTop: 8,
   },
-  secondaryButton: {
-    flex: 1,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: '#F4F5F7',
+  micRing: {
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    borderWidth: 1.4,
+    borderColor: colors.accent,
+    backgroundColor: 'rgba(243,196,162,0.08)',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 4,
   },
-  secondaryButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#374151',
-  },
-  primaryButton: {
+  tiles: { flexDirection: 'row', gap: 9 },
+  tile: {
     flex: 1,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: '#2563EB',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: radius.lg,
+    paddingVertical: 14,
+    paddingHorizontal: 9,
+    gap: 10,
+    minHeight: 92,
   },
-  primaryButtonDisabled: {
-    opacity: 0.45,
-  },
-  primaryButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  pressed: {
-    opacity: 0.72,
-  },
+  tileLabel: { fontFamily: font.medium, fontSize: 11.5, lineHeight: 15, color: colors.text },
+  prompt: { paddingVertical: 14, paddingHorizontal: 16, gap: 10 },
+  promptHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  promptTitle: { flex: 1, fontFamily: font.medium, fontSize: 12.5, color: colors.muted },
+  promptBody: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  promptText: { flex: 1, fontFamily: font.body, fontSize: 14, lineHeight: 20, color: colors.text },
+  countLine: { textAlign: 'center', marginTop: 2 },
 });
