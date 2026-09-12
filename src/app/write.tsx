@@ -1,5 +1,5 @@
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { CHALLENGES } from '@/lib/challenges';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -17,8 +17,11 @@ import { colors, font, gutter, tabularNums } from '@/theme';
 export default function Write() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { composeDraft } = useJournal();
-  const [text, setText] = useState('');
+  const { composeDraft, writing: text, setWriting: setText } = useJournal();
+  const { prompt, challengeId, challengeStep } = useLocalSearchParams<{ prompt?: string; challengeId?: string; challengeStep?: string }>();
+  const journey = CHALLENGES.find((item) => item.id === challengeId);
+  const step = Number(challengeStep);
+  const isJourney = !!journey && Number.isInteger(step) && step >= 0 && step < journey.prompts.length;
 
   const goBack = () => {
     if (router.canGoBack()) router.back();
@@ -30,7 +33,7 @@ export default function Write() {
 
   const submit = () => {
     if (!canSave) return;
-    composeDraft({ body: text.trim(), source: 'text', durationMs: 0 });
+    composeDraft({ body: text.trim(), source: 'text', durationMs: 0, ...(isJourney ? { challengeId, challengeStep: step } : {}) });
     router.replace('/review');
   };
 
@@ -42,11 +45,12 @@ export default function Write() {
       <TopBar onBack={goBack} />
 
       <View style={styles.head}>
-        <Display size={23}>Write Journal</Display>
-        <Body>Say it however it comes out. Nothing here is graded.</Body>
+        <Display size={23}>{isJourney ? `${journey.title} · ${step + 1}/3` : "Write Journal"}</Display>
+        <Body>{prompt || "Say it however it comes out. Nothing here is graded."}</Body>
       </View>
 
       <TextInput
+        accessibilityLabel="Journal text"
         value={text}
         onChangeText={setText}
         multiline
@@ -66,7 +70,7 @@ export default function Write() {
           {!canSave && <Text style={styles.hint}>A few more words and it&rsquo;s ready.</Text>}
         </View>
 
-        <NoteCard icon="lock">Everything you write stays on this device.</NoteCard>
+        <NoteCard icon="lock">Your writing is kept on this device when you leave.</NoteCard>
         <PrimaryButton label="Continue" icon="arrowRight" onPress={submit} disabled={!canSave} />
       </View>
     </KeyboardAvoidingView>

@@ -21,7 +21,7 @@ import { colors, font, gutter, moodStyle } from '@/theme';
 export default function EntryDetail() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { entryById, deleteEntry } = useJournal();
+  const { entryById, deleteEntry, editEntry } = useJournal();
   const { toast } = useToast();
 
   const entry = entryById(id ?? '');
@@ -73,6 +73,7 @@ export default function EntryDetail() {
         <Display size={28}>{entry.title}</Display>
       </View>
 
+      <TextButton label="Edit entry" tone="accent" onPress={() => { editEntry(entry); router.push('/review'); }} />
       <Prose style={styles.body}>{entry.body}</Prose>
 
       <View style={styles.divider} />
@@ -81,7 +82,7 @@ export default function EntryDetail() {
         <View style={styles.section}>
           <View style={styles.sectionHead}>
             <SparkIcon size={15} color={colors.accent} />
-            <Kicker color={colors.accent}>AI-Categorized</Kicker>
+            <Kicker color={colors.accent}>{entry.analysisModel ? "AI-suggested tags" : "Suggested tags"}</Kicker>
           </View>
           <View style={styles.chips}>
             {entry.categories.map((cat) => (

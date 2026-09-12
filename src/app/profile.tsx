@@ -1,6 +1,8 @@
+import { MONTHLY_PRICE_LABEL } from '@/lib/pricing';
+import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Body, Card, Display, IconTile, Kicker, Screen, TopBar } from '@/components/vq';
+import { Pressable, Share, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Body, Card, IconTile, Kicker, Screen, TopBar } from '@/components/vq';
 import { useJournal } from '@/context/journal';
 import { useToast } from '@/context/toast';
 import { Icon, type IconName } from '@/icons';
@@ -29,6 +31,13 @@ export default function Profile() {
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/'));
   const { entries, streak, settings, updateSettings, resetAll } = useJournal();
   const { toast } = useToast();
+  const [name, setName] = useState(settings.name);
+  const exportJournal = async () => {
+    if (!entries.length) { toast('Write your first entry before exporting'); return; }
+    try {
+      await Share.share({ title: 'VOQDO journal', message: entries.map((entry) => `# ${entry.title}\n\n${new Date(entry.createdAt).toLocaleString()} · ${entry.mood}\n\n${entry.body}\n\nTags: ${entry.categories.join(', ')}`).join('\n\n---\n\n') });
+    } catch { toast('Could not open sharing. Please try again.'); }
+  };
 
   const words = entries.reduce(
     (sum, entry) => sum + (entry.body.trim() ? entry.body.trim().split(/\s+/).length : 0),
@@ -50,6 +59,7 @@ export default function Profile() {
     {
       label: 'JOURNALLING',
       rows: [
+        { label: 'Your daily ritual', value: `${settings.weeklyGoal} days / week`, icon: 'sprout', cat: 'Personal Growth', onPress: () => router.push('/progress') },
         {
           label: 'Categories',
           value: `${CATEGORY_KEYS.length} active`,
@@ -59,10 +69,9 @@ export default function Profile() {
         },
         {
           label: 'Nightly reminder',
-          value: settings.nightlyPrompt ? settings.reminderTime : 'Off',
+          value: 'Coming soon',
           icon: 'bell',
           cat: 'Personal Growth',
-          onPress: () => updateSettings({ nightlyPrompt: !settings.nightlyPrompt }),
         },
         { label: 'Voice language', value: 'English (US)', icon: 'mic', cat: 'Self-Care' },
       ],
@@ -72,7 +81,7 @@ export default function Profile() {
       rows: [
         {
           label: 'VOQDO Pro',
-          value: settings.pro ? 'Active' : 'Free plan',
+          value: `${MONTHLY_PRICE_LABEL}/month`,
           icon: 'star',
           cat: 'Gratitude',
           onPress: () => router.push('/pro'),
@@ -82,7 +91,8 @@ export default function Profile() {
     {
       label: 'ABOUT',
       rows: [
-        { label: 'Privacy', value: 'On-device', icon: 'lock', cat: 'Reflection' },
+        { label: 'Export journal', value: 'Markdown', icon: 'export', cat: 'Reflection', onPress: exportJournal },
+        { label: 'Privacy', value: 'Local + optional AI', icon: 'lock', cat: 'Reflection' },
         { label: 'Version', value: '1.0', icon: 'info', cat: 'Reflection' },
         {
           label: 'Erase journal',
@@ -106,7 +116,7 @@ export default function Profile() {
             {settings.name.trim().charAt(0).toUpperCase() || 'Y'}
           </Text>
         </View>
-        <Display size={25}>{settings.name}</Display>
+        <TextInput accessibilityLabel="Your name" value={name} onChangeText={setName} maxLength={40} returnKeyType="done" onEndEditing={() => { const next = name.trim() || 'You'; setName(next); updateSettings({ name: next }); }} style={{ fontFamily: font.display, fontSize: 25, color: colors.text, textAlign: 'center', minWidth: 140, padding: 8, borderBottomWidth: 1, borderBottomColor: colors.border }} />
         <Body>Journalling since your first entry.</Body>
       </View>
 

@@ -1,3 +1,4 @@
+import { HabitCard } from '@/components/HabitCard';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -109,6 +110,14 @@ export default function Home() {
         />
       </View>
 
+      <HabitCard />
+      <Card onPress={() => router.push('/challenges')} style={{ padding: 18, gap: 8 }}>
+        <Display size={21}>Choose a guided journey</Display><Body>Three prompts. Three days. A small shift in perspective.</Body>
+      </Card>
+      <Card onPress={() => router.push('/reflect')} style={{ padding: 18, gap: 8 }}>
+        <Display size={21}>Your AI reflection room</Display><Body>Revisit your week, ask your journal, or find one small next step.</Body>
+      </Card>
+
       <Card style={styles.prompt}>
         <View style={styles.promptHead}>
           <Icon name="clock" size={14} color={colors.muted} strokeWidth={1.7} />
@@ -123,7 +132,7 @@ export default function Home() {
         </View>
 
         <Pressable
-          onPress={() => router.push('/write')}
+          onPress={() => router.push({ pathname: '/write', params: { prompt: PROMPTS[promptIndex] } })}
           style={({ pressed }) => [styles.promptBody, pressed && { opacity: pressedOpacity }]}
         >
           <Text style={styles.promptText}>{PROMPTS[promptIndex]}</Text>

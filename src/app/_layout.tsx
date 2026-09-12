@@ -20,12 +20,13 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { JournalProvider, useJournal } from '@/context/journal';
 import { ToastProvider } from '@/context/toast';
 import { colors } from '@/theme';
+import { Screen, Display, Body, PrimaryButton } from '@/components/vq';
 
 SplashScreen.preventAutoHideAsync();
 SystemUI.setBackgroundColorAsync(colors.bg);
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     PlayfairDisplay_400Regular,
     PlayfairDisplay_400Regular_Italic,
     PlayfairDisplay_500Medium,
@@ -40,7 +41,7 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <JournalProvider>
           <ToastProvider>
-            <RootNavigator fontsLoaded={fontsLoaded} />
+            <RootNavigator fontsLoaded={fontsLoaded || !!fontError} />
           </ToastProvider>
         </JournalProvider>
       </SafeAreaProvider>
@@ -49,15 +50,15 @@ export default function RootLayout() {
 }
 
 function RootNavigator({ fontsLoaded }: { fontsLoaded: boolean }) {
-  const { ready, settings } = useJournal();
+  const { ready, settings, loadError, retryLoad } = useJournal();
   const segments = useSegments();
   const router = useRouter();
 
   const booted = ready && fontsLoaded;
 
   useEffect(() => {
-    if (booted) SplashScreen.hideAsync();
-  }, [booted]);
+    if (booted || loadError) SplashScreen.hideAsync();
+  }, [booted, loadError]);
 
   // The journal is local, so there is nobody to authenticate — the only gate
   // is whether this person has seen the welcome screen yet.
@@ -70,6 +71,13 @@ function RootNavigator({ fontsLoaded }: { fontsLoaded: boolean }) {
     else if (settings.onboarded && onWelcome) router.replace('/');
   }, [booted, settings.onboarded, segments, router]);
 
+  if (loadError) return (
+    <Screen contentStyle={{ padding: 24, gap: 16 }}>
+      <Display size={24}>Your journal couldn’t open</Display>
+      <Body>Your saved entries haven’t been changed. Try opening them again.</Body>
+      <PrimaryButton label="Try again" onPress={retryLoad} />
+    </Screen>
+  );
   if (!booted) return null;
 
   return (
@@ -89,6 +97,9 @@ function RootNavigator({ fontsLoaded }: { fontsLoaded: boolean }) {
         <Stack.Screen name="review" options={{ gestureEnabled: false }} />
         <Stack.Screen name="categories" />
         <Stack.Screen name="profile" />
+        <Stack.Screen name="progress" />
+        <Stack.Screen name="challenges" />
+        <Stack.Screen name="reflect" />
         <Stack.Screen name="entry/[id]" />
         <Stack.Screen name="category/[key]" />
       </Stack>

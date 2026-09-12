@@ -13,7 +13,7 @@ export default function CategoryDetail() {
   const params = useLocalSearchParams<{ key: string }>();
   const { entriesIn } = useJournal();
 
-  const raw = decodeURIComponent(params.key ?? '');
+  const raw = params.key ?? ''; // Router parameters are already decoded.
   const cat = (CATEGORY_KEYS.includes(raw as CategoryKey) ? raw : 'Reflection') as CategoryKey;
   const style = catStyle(cat);
   const entries = entriesIn(cat);

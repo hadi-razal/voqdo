@@ -1,8 +1,18 @@
-import {
-  ExpoSpeechRecognitionModule,
-  useSpeechRecognitionEvent,
-} from 'expo-speech-recognition';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { ExpoSpeechRecognitionNativeEvents } from 'expo-speech-recognition/build/ExpoSpeechRecognitionModule.types';
+
+import { ExpoSpeechRecognitionModule } from '@/lib/speechModule';
+
+function useSpeechRecognitionEvent<K extends keyof ExpoSpeechRecognitionNativeEvents>(
+  name: K, listener: ExpoSpeechRecognitionNativeEvents[K]
+) {
+  const latest = useRef(listener);
+  useEffect(() => { latest.current = listener; });
+  useEffect(() => {
+    const subscription = ExpoSpeechRecognitionModule?.addListener(name, ((event: Parameters<ExpoSpeechRecognitionNativeEvents[K]>[0]) => latest.current(event as never)) as ExpoSpeechRecognitionNativeEvents[K]);
+    return () => subscription?.remove();
+  }, [name]);
+}
 
 export type CapturePhase = 'idle' | 'listening' | 'processing' | 'done' | 'error';
 
@@ -58,7 +68,12 @@ export function useVoiceCapture(): VoiceCapture {
     }
   }, []);
 
-  useEffect(() => clearTimers, [clearTimers]);
+  useEffect(() => () => {
+    cancelled.current = true;
+    clearTimers();
+    if (running.current) ExpoSpeechRecognitionModule?.abort();
+    running.current = false;
+  }, [clearTimers]);
 
   /** Both the transcript and the audio file are in — the draft can be built. */
   const settle = useCallback(() => {
@@ -85,10 +100,12 @@ export function useVoiceCapture(): VoiceCapture {
   });
 
   useSpeechRecognitionEvent('audiostart', (event) => {
+    if (cancelled.current) return;
     if (event.uri) setAudioUri(event.uri);
   });
 
   useSpeechRecognitionEvent('audioend', (event) => {
+    if (cancelled.current) return;
     if (event.uri) setAudioUri(event.uri);
     // `end` often lands before the file is closed; this is the real finish.
     if (awaitingAudio.current) settle();
@@ -111,7 +128,7 @@ export function useVoiceCapture(): VoiceCapture {
   });
 
   useSpeechRecognitionEvent('end', () => {
-    if (cancelled.current) return;
+    if (cancelled.current || !running.current) return;
     if (ticker.current) {
       clearInterval(ticker.current);
       ticker.current = null;
@@ -135,26 +152,41 @@ export function useVoiceCapture(): VoiceCapture {
     setError(undefined);
     setPhase('processing');
 
-    const permission = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
-    if (!permission.granted) {
+    if (!ExpoSpeechRecognitionModule) {
       running.current = false;
-      setError('VOQDO needs microphone and speech access to hear your day.');
+      setError('Voice is unavailable in Expo Go. You can write your entry instead.');
       setPhase('error');
       return;
     }
 
-    if (cancelled.current) {
-      running.current = false;
-      return;
-    }
+    try {
+      const permission = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+      if (!permission.granted) {
+        running.current = false;
+        setError('VOQDO needs microphone and speech access to hear your day.');
+        setPhase('error');
+        return;
+      }
 
-    ExpoSpeechRecognitionModule.start({
-      lang: 'en-US',
-      interimResults: true,
-      continuous: true,
-      addsPunctuation: true,
-      recordingOptions: { persist: true },
-    });
+      if (cancelled.current) {
+        running.current = false;
+        return;
+      }
+
+      ExpoSpeechRecognitionModule.start({
+        lang: 'en-US',
+        interimResults: true,
+        continuous: true,
+        addsPunctuation: true,
+        requiresOnDeviceRecognition: true,
+        recordingOptions: { persist: true },
+      });
+    } catch {
+      running.current = false;
+      if (cancelled.current) return;
+      setError('Could not start the microphone. Try again or write your entry instead.');
+      setPhase('error');
+    }
   }, [clearTimers]);
 
   const stop = useCallback(() => {
@@ -162,8 +194,10 @@ export function useVoiceCapture(): VoiceCapture {
       clearInterval(ticker.current);
       ticker.current = null;
     }
+    if (!running.current) return;
+    setElapsedMs(Date.now() - startedAt.current);
     setPhase('processing');
-    ExpoSpeechRecognitionModule.stop();
+    ExpoSpeechRecognitionModule?.stop();
   }, []);
 
   const cancel = useCallback(() => {
@@ -171,7 +205,7 @@ export function useVoiceCapture(): VoiceCapture {
     running.current = false;
     awaitingAudio.current = false;
     clearTimers();
-    ExpoSpeechRecognitionModule.abort();
+    ExpoSpeechRecognitionModule?.abort();
     setPhase('idle');
     setTranscript('');
     setElapsedMs(0);

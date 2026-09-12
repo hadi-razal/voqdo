@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Body, Display, NoteCard, PrimaryButton, TopBar } from '@/components/vq';
+import { Body, Display, NoteCard, PrimaryButton, TextButton, TopBar } from '@/components/vq';
 import { useJournal } from '@/context/journal';
 import { Icon } from '@/icons';
 import { formatDuration } from '@/lib/analyze';
@@ -84,7 +84,10 @@ export default function Record() {
 
       <View style={styles.footer}>
         {error ? (
-          <PrimaryButton label="Try again" onPress={start} />
+          <>
+            <PrimaryButton label="Try again" onPress={start} />
+            <TextButton label="Write instead" onPress={() => { cancel(); router.replace('/write'); }} />
+          </>
         ) : (
           listening && (
             <>

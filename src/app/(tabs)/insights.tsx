@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { Body, Card, Display, EmptyState, Kicker, Screen } from '@/components/vq';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Body, Card, Display, EmptyState, Kicker, PrimaryButton, Screen } from '@/components/vq';
 import { useJournal, type Entry } from '@/context/journal';
 import { Icon, SparkIcon } from '@/icons';
 import {
@@ -21,15 +22,18 @@ import {
  */
 export default function Insights() {
   const { entries, streak } = useJournal();
+  const router = useRouter();
+  const [period, setPeriod] = useState<7 | 30 | null>(30);
 
   // The window is anchored once, when the screen opens, so re-renders cannot
   // shift it underneath the numbers being read.
-  const [openedAt] = useState(() => Date.now());
+  const [openedAt, setOpenedAt] = useState(() => Date.now());
+  useFocusEffect(useCallback(() => { setOpenedAt(Date.now()); }, []));
 
   const recent = useMemo(() => {
-    const cutoff = openedAt - 30 * 24 * 60 * 60 * 1000;
+    const cutoff = period === null ? 0 : openedAt - period * 24 * 60 * 60 * 1000;
     return entries.filter((entry) => entry.createdAt >= cutoff);
-  }, [entries, openedAt]);
+  }, [entries, openedAt, period]);
 
   const bars = useMemo(() => {
     const counts = CATEGORY_KEYS.map((cat) => ({
@@ -76,9 +80,18 @@ export default function Insights() {
     <Screen contentStyle={styles.content}>
       <View style={{ gap: 6 }}>
         <Display size={27}>Insights</Display>
-        <Body>The last 30 days, in your own words.</Body>
+        <Body>{period === null ? "Your whole journal, in your own words." : `The last ${period} days, in your own words.`}</Body>
       </View>
 
+      <PrimaryButton label="Open AI reflection room" onPress={() => router.push('/reflect')} />
+      <View style={styles.pills}>
+        {([7, 30, null] as const).map((days) => (
+          <Pressable key={days ?? 'all'} accessibilityRole="button" accessibilityState={{ selected: period === days }} onPress={() => setPeriod(days)} style={[styles.pill, { backgroundColor: period === days ? colors.accent : colors.surfaceRaised }]}>
+            <Text style={[styles.pillText, { color: period === days ? colors.accentInk : colors.muted }]}>{days === null ? 'All time' : `${days} days`}</Text>
+          </Pressable>
+        ))}
+      </View>
+      {recent.length === 0 && <Body>No entries in this period. Try a wider time range.</Body>}
       <View style={styles.stats}>
         <Stat n={recent.length} label={recent.length === 1 ? 'Entry' : 'Entries'} />
         <Stat n={streak} label="Day streak" />
@@ -123,10 +136,10 @@ export default function Insights() {
             {moods.map(([mood, n]) => {
               const style = moodStyle(mood);
               return (
-                <View key={mood} style={[styles.pill, { backgroundColor: style.bg }]}>
+                <Pressable key={mood} accessibilityRole="button" accessibilityLabel={`Search ${mood} entries`} onPress={() => router.push({ pathname: '/search', params: { q: mood } })} style={[styles.pill, { backgroundColor: style.bg }]}>
                   <Text style={[styles.pillText, { color: style.color }]}>{mood}</Text>
                   <Text style={[styles.pillN, tabularNums, { color: style.color }]}>{n}</Text>
-                </View>
+                </Pressable>
               );
             })}
           </View>

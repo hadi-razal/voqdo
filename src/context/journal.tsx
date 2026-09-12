@@ -1,3 +1,5 @@
+import { parseSavedReflections, type SavedReflection } from '@/lib/reflections';
+import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   createContext,
@@ -6,9 +8,12 @@ import {
   useEffect,
   useMemo,
   useState,
+  useRef,
   type ReactNode,
 } from 'react';
+import { challengeProgress } from '@/lib/challenges';
 import { analyzeEntry, type Analysis } from '@/lib/analyze';
+import { DEFAULT_SETTINGS, parseEntries, parseSettings } from '@/lib/journalStorage';
 import { CATEGORY_KEYS, type CategoryKey, type Mood } from '@/theme';
 
 export type EntrySource = 'voice' | 'text';
@@ -25,12 +30,19 @@ export type Entry = {
   mood: Mood;
   emotions: string[];
   affirmation: string;
+  analysisModel?: string;
+  challengeId?: string;
+  challengeStep?: number;
   /** Local file URI of the recording, when one was kept. */
   audioUri?: string;
 };
 
 /** An analysed entry that has not been saved yet. */
 export type Draft = Analysis & {
+  editingId?: string;
+  analysisModel?: string;
+  challengeId?: string;
+  challengeStep?: number;
   body: string;
   source: EntrySource;
   durationMs: number;
@@ -38,6 +50,7 @@ export type Draft = Analysis & {
 };
 
 export type Settings = {
+  weeklyGoal: 3 | 5 | 7;
   onboarded: boolean;
   micGranted: boolean;
   nightlyPrompt: boolean;
@@ -56,7 +69,11 @@ export type WeekDay = {
 };
 
 type JournalContextValue = {
+  reflections: SavedReflection[];
+  saveReflection: (reflection: SavedReflection) => Promise<void>;
   ready: boolean;
+  loadError: boolean;
+  retryLoad: () => void;
   entries: Entry[];
   settings: Settings;
   streak: number;
@@ -65,11 +82,14 @@ type JournalContextValue = {
   entriesIn: (cat: CategoryKey) => Entry[];
   countFor: (cat: CategoryKey) => number;
   search: (query: string) => Entry[];
+  writing: string;
+  setWriting: (text: string) => void;
   draft: Draft | null;
   setDraft: (draft: Draft | null) => void;
   /** Analyses the text and parks it as the current draft. */
-  composeDraft: (input: { body: string; source: EntrySource; durationMs: number; audioUri?: string }) => Draft;
-  saveDraft: () => Entry | null;
+  composeDraft: (input: { body: string; source: EntrySource; durationMs: number; audioUri?: string; challengeId?: string; challengeStep?: number }) => Draft;
+  saveDraft: () => Promise<Entry | null>;
+  editEntry: (entry: Entry) => void;
   deleteEntry: (id: string) => void;
   updateSettings: (patch: Partial<Settings>) => void;
   resetAll: () => void;
@@ -77,55 +97,84 @@ type JournalContextValue = {
 
 const ENTRIES_KEY = 'voqdo.entries';
 const SETTINGS_KEY = 'voqdo.settings';
+const WRITING_KEY = 'voqdo.writing';
+const REFLECTIONS_KEY = 'voqdo.reflections';
 
-const DEFAULT_SETTINGS: Settings = {
-  onboarded: false,
-  micGranted: false,
-  nightlyPrompt: false,
-  reminderTime: '9:00 PM',
-  pro: false,
-  name: 'You',
-};
 
 const JournalContext = createContext<JournalContextValue | null>(null);
 
 export function JournalProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const saving = useRef(false);
+  const [today, setToday] = useState(() => dayKey(Date.now()));
+  useEffect(() => {
+    const timer = setInterval(() => setToday(dayKey(Date.now())), 60_000);
+    return () => clearInterval(timer);
+  }, []);
+  const [reflections, setReflections] = useState<SavedReflection[]>([]);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
+  const [writing, setWriting] = useState('');
   const [draft, setDraft] = useState<Draft | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
-      const [storedEntries, storedSettings] = await AsyncStorage.multiGet([
-        ENTRIES_KEY,
-        SETTINGS_KEY,
-      ]);
-      if (cancelled) return;
+      setLoadError(false);
+      try {
+        const [storedEntries, storedSettings, storedWriting, storedReflections] = await AsyncStorage.multiGet([
+          ENTRIES_KEY,
+          SETTINGS_KEY,
+          WRITING_KEY,
+          REFLECTIONS_KEY,
+        ]);
+        if (cancelled) return;
 
-      setEntries(parseEntries(storedEntries[1]));
-      setSettings({ ...DEFAULT_SETTINGS, ...safeParse(storedSettings[1], {}) });
-      setReady(true);
+        setReflections(parseSavedReflections(storedReflections[1]));
+        setWriting(storedWriting[1] ?? '');
+        setEntries(parseEntries(storedEntries[1]));
+        setSettings(parseSettings(storedSettings[1]));
+        setReady(true);
+      } catch {
+        if (!cancelled) setLoadError(true);
+      }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loadAttempt]);
 
   // Persist only after the initial load, so an empty first render cannot
   // overwrite what is already on disk.
   useEffect(() => {
     if (!ready) return;
-    AsyncStorage.setItem(ENTRIES_KEY, JSON.stringify(entries));
+    AsyncStorage.setItem(ENTRIES_KEY, JSON.stringify(entries)).catch(() => Alert.alert('Could not save journal', 'Your changes are still open, but could not be stored on this device. Please free some space and try again.'));
   }, [entries, ready]);
 
   useEffect(() => {
     if (!ready) return;
-    AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)).catch(() => Alert.alert('Could not save settings', 'Please try changing the setting again.'));
   }, [settings, ready]);
+
+  useEffect(() => {
+    if (!ready) return;
+    AsyncStorage.setItem(WRITING_KEY, writing).catch(() => Alert.alert('Draft not saved', 'Keep this screen open and try again after freeing device storage.'));
+  }, [writing, ready]);
+
+  useEffect(() => {
+    if (!ready) return;
+    AsyncStorage.setItem(REFLECTIONS_KEY, JSON.stringify(reflections)).catch(() => Alert.alert('Could not store reflections', 'Please try again.'));
+  }, [reflections, ready]);
+
+  const saveReflection = useCallback(async (reflection: SavedReflection) => {
+    const next = [reflection, ...reflections.filter((item) => item.id !== reflection.id)];
+    await AsyncStorage.setItem(REFLECTIONS_KEY, JSON.stringify(next));
+    setReflections(next);
+  }, [reflections]);
 
   const updateSettings = useCallback((patch: Partial<Settings>) => {
     setSettings((current) => ({ ...current, ...patch }));
@@ -133,26 +182,34 @@ export function JournalProvider({ children }: { children: ReactNode }) {
 
   const deleteEntry = useCallback((id: string) => {
     setEntries((current) => current.filter((entry) => entry.id !== id));
+    setReflections((current) => current.filter((reflection) => !reflection.sourceIds.includes(id)));
   }, []);
 
   const resetAll = useCallback(() => {
     setEntries([]);
+    setReflections([]);
+    setWriting('');
     setSettings({ ...DEFAULT_SETTINGS, onboarded: true });
     setDraft(null);
   }, []);
 
   const composeDraft = useCallback<JournalContextValue['composeDraft']>((input) => {
     const next: Draft = { ...analyzeEntry(input.body), ...input };
+    saving.current = false;
     setDraft(next);
     return next;
   }, []);
 
-  const saveDraft = useCallback((): Entry | null => {
-    if (!draft) return null;
+  const saveDraft = useCallback(async (): Promise<Entry | null> => {
+    if (!draft || saving.current || !draft.body.trim() || !draft.title.trim()) return null;
+    saving.current = true;
+    const original = entries.find((entry) => entry.id === draft.editingId);
 
+    const journey = draft.challengeId ? challengeProgress(entries, draft.challengeId, Date.now()) : null;
+    const challengeValid = original || (journey && !journey.done && !journey.todayDone && journey.completed === draft.challengeStep);
     const entry: Entry = {
-      id: `${Date.now()}`,
-      createdAt: Date.now(),
+      id: original?.id ?? `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      createdAt: original?.createdAt ?? Date.now(),
       source: draft.source,
       durationMs: draft.durationMs,
       title: draft.title,
@@ -161,19 +218,41 @@ export function JournalProvider({ children }: { children: ReactNode }) {
       mood: draft.mood,
       emotions: draft.emotions,
       affirmation: draft.affirmation,
+      analysisModel: draft.analysisModel,
+      challengeId: challengeValid ? draft.challengeId : undefined,
+      challengeStep: challengeValid ? draft.challengeStep : undefined,
       audioUri: draft.audioUri,
     };
 
-    setEntries((current) => [entry, ...current]);
+    const nextEntries = original
+      ? entries.map((item) => item.id === original.id ? entry : item)
+      : [entry, ...entries];
+    try {
+      await AsyncStorage.setItem(ENTRIES_KEY, JSON.stringify(nextEntries));
+    } catch {
+      saving.current = false;
+      return null;
+    }
+    setEntries(nextEntries);
     setDraft(null);
+    if (!draft.editingId && draft.source === 'text') setWriting('');
     return entry;
-  }, [draft]);
+  }, [draft, entries]);
 
-  const week = useMemo(() => buildWeek(entries), [entries]);
+  const week = useMemo(() => {
+    // The day key invalidates calendar calculations when midnight passes.
+    void today;
+    return buildWeek(entries);
+  }, [entries, today]);
 
   const value = useMemo<JournalContextValue>(
     () => ({
+      reflections,
+      saveReflection,
       ready,
+      loadError,
+      retryLoad: () => setLoadAttempt((value) => value + 1),
+      editEntry: (entry) => { saving.current = false; setDraft({ ...entry, editingId: entry.id }); },
       entries,
       settings,
       streak: streakFrom(entries),
@@ -182,6 +261,8 @@ export function JournalProvider({ children }: { children: ReactNode }) {
       entriesIn: (cat) => entries.filter((entry) => entry.categories.includes(cat)),
       countFor: (cat) => entries.filter((entry) => entry.categories.includes(cat)).length,
       search: (query) => searchEntries(entries, query),
+      writing,
+      setWriting,
       draft,
       setDraft,
       composeDraft,
@@ -190,7 +271,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
       updateSettings,
       resetAll,
     }),
-    [ready, entries, settings, week, draft, composeDraft, saveDraft, deleteEntry, updateSettings, resetAll]
+    [reflections, saveReflection, ready, loadError, entries, settings, week, writing, draft, composeDraft, saveDraft, deleteEntry, updateSettings, resetAll]
   );
 
   return <JournalContext.Provider value={value}>{children}</JournalContext.Provider>;
@@ -202,84 +283,6 @@ export function useJournal() {
   return context;
 }
 
-function safeParse<T>(raw: string | null, fallback: T): T {
-  if (!raw) return fallback;
-  try {
-    return JSON.parse(raw) as T;
-  } catch {
-    return fallback;
-  }
-}
-
-const MOODS: Mood[] = ['Calm', 'Bright', 'Heavy', 'Restless', 'Tender'];
-
-/**
- * Reads stored entries defensively.
- *
- * Anything unrecognised is repaired rather than dropped — a field written by
- * an older build, or a value that no longer exists in the enum, must never
- * cost someone their journal or crash a screen that indexes by it.
- */
-function parseEntries(raw: string | null): Entry[] {
-  const parsed = safeParse<unknown>(raw, []);
-  if (!Array.isArray(parsed)) return [];
-
-  return parsed.map(normalizeEntry).filter((entry): entry is Entry => entry !== null);
-}
-
-function normalizeEntry(input: unknown): Entry | null {
-  if (!input || typeof input !== 'object') return null;
-  const raw = input as Record<string, unknown>;
-
-  const id = typeof raw.id === 'string' && raw.id ? raw.id : null;
-  // `transcript` is what an earlier build called the entry text.
-  const body =
-    typeof raw.body === 'string' && raw.body.trim()
-      ? raw.body
-      : typeof raw.transcript === 'string' && raw.transcript.trim()
-        ? raw.transcript
-        : null;
-
-  if (!id || !body) return null;
-
-  const categories = Array.isArray(raw.categories)
-    ? raw.categories.filter((cat): cat is CategoryKey =>
-        CATEGORY_KEYS.includes(cat as CategoryKey)
-      )
-    : [];
-
-  const emotions = Array.isArray(raw.emotions)
-    ? raw.emotions.filter((e): e is string => typeof e === 'string')
-    : [];
-
-  const mood = MOODS.includes(raw.mood as Mood) ? (raw.mood as Mood) : null;
-  const title = typeof raw.title === 'string' && raw.title.trim() ? raw.title : null;
-  const affirmation =
-    typeof raw.affirmation === 'string' && raw.affirmation.trim() ? raw.affirmation : null;
-
-  // Re-derive only the parts that are missing, so a partial record is healed
-  // instead of discarded.
-  const derived = title && affirmation && mood && categories.length > 0 ? null : analyzeEntry(body);
-
-  const durationMs = typeof raw.durationMs === 'number' && raw.durationMs >= 0 ? raw.durationMs : 0;
-
-  return {
-    id,
-    createdAt:
-      typeof raw.createdAt === 'number' && Number.isFinite(raw.createdAt)
-        ? raw.createdAt
-        : Date.now(),
-    source: raw.source === 'text' || durationMs === 0 ? 'text' : 'voice',
-    durationMs,
-    title: title ?? derived!.title,
-    body,
-    categories: categories.length > 0 ? categories : (derived!.categories ?? ['Reflection']),
-    mood: mood ?? derived!.mood,
-    emotions: emotions.length > 0 ? emotions : (derived?.emotions ?? []),
-    affirmation: affirmation ?? derived!.affirmation,
-    audioUri: typeof raw.audioUri === 'string' ? raw.audioUri : undefined,
-  };
-}
 
 function searchEntries(entries: Entry[], query: string): Entry[] {
   const q = query.trim().toLowerCase();

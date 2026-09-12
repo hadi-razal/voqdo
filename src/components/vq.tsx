@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, Ref } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -29,11 +29,13 @@ export function Screen({
   scroll = true,
   contentStyle,
   topInset = true,
+  scrollRef,
 }: {
   children: ReactNode;
   scroll?: boolean;
   contentStyle?: StyleProp<ViewStyle>;
   topInset?: boolean;
+  scrollRef?: Ref<ScrollView>;
 }) {
   const insets = useSafeAreaInsets();
   const pad = { paddingTop: topInset ? insets.top + 8 : 0 };
@@ -44,6 +46,7 @@ export function Screen({
 
   return (
     <ScrollView
+      ref={scrollRef}
       style={styles.screen}
       contentContainerStyle={[pad, contentStyle]}
       showsVerticalScrollIndicator={false}

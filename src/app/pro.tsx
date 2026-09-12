@@ -1,30 +1,27 @@
+import { MONTHLY_PRICE_LABEL } from '@/lib/pricing';
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Body, Card, Display, IconTile, Screen, TopBar } from '@/components/vq';
-import { useJournal } from '@/context/journal';
 import { useToast } from '@/context/toast';
 import type { IconName } from '@/icons';
 import { catStyle, colors, font, glowShadow, gutter, radius, tabularNums } from '@/theme';
 
 const BENEFITS: { title: string; icon: IconName; cat: string }[] = [
   { title: 'Unlimited recording length', icon: 'mic', cat: 'Self-Care' },
-  { title: 'Search every word', icon: 'search', cat: 'Mindset' },
+  { title: 'Custom reflection prompts', icon: 'search', cat: 'Mindset' },
   { title: 'Custom categories', icon: 'tag', cat: 'Personal Growth' },
   { title: 'Deeper monthly reflections', icon: 'sparkle', cat: 'Gratitude' },
   { title: 'Encrypted cloud backup', icon: 'cloud', cat: 'Reflection' },
-  { title: 'Export to Markdown', icon: 'export', cat: 'Relationships' },
+  { title: 'Cross-device journal sync', icon: 'export', cat: 'Relationships' },
 ];
 
 export default function Pro() {
   const router = useRouter();
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/'));
-  const { settings, updateSettings } = useJournal();
   const { toast } = useToast();
 
   const upgrade = () => {
-    // Stands in for the store purchase — flips local state only.
-    updateSettings({ pro: true });
-    toast('Welcome to VOQDO Pro');
+    toast('Pro is in development. No purchase or subscription has been created.');
   };
 
   return (
@@ -32,7 +29,7 @@ export default function Pro() {
       <TopBar onBack={goBack} />
 
       <View style={styles.head}>
-        <Text style={styles.kicker}>VOQDO PRO</Text>
+        <Text style={styles.kicker}>VOQDO PRO · PLANNED FEATURES</Text>
         <Display size={30}>
           Keep every word,{'\n'}
           <Text style={{ color: colors.accent }}>search every month</Text>
@@ -61,31 +58,29 @@ export default function Pro() {
         <View style={styles.priceTop}>
           <Text style={styles.priceKicker}>MONTHLY</Text>
           <View style={styles.trial}>
-            <Text style={styles.trialText}>7-day free trial</Text>
+            <Text style={styles.trialText}>In development</Text>
           </View>
         </View>
 
         <View style={styles.amountRow}>
-          <Text style={[styles.amount, tabularNums]}>$2.99</Text>
-          <Text style={styles.per}>/ month</Text>
+          <Text style={[styles.amount, tabularNums]}>{MONTHLY_PRICE_LABEL}</Text>
+          <Text style={styles.per}>USD / month</Text>
         </View>
 
         <Body style={{ color: colors.muted }}>
-          Cancel anytime. Yearly plan $24.99 — two months free.
+          Planned pricing. Pro features and purchases are not available yet.
         </Body>
 
         <Pressable
           onPress={upgrade}
-          disabled={settings.pro}
           style={({ pressed }) => [
             styles.cta,
             glowShadow(colors.accent, 'sm'),
-            settings.pro && { opacity: 0.55 },
             pressed && { opacity: 0.85 },
           ]}
         >
           <Text style={styles.ctaLabel}>
-            {settings.pro ? 'You’re on Pro' : 'Start free trial'}
+            {'Preview only · Coming soon'}
           </Text>
         </Pressable>
       </View>
