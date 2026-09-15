@@ -17,6 +17,7 @@ export default function Progress() {
       <View style={styles.section}>
         <Kicker color={colors.success}>SMALL STEPS, REAL GROWTH</Kicker>
         <Display size={29}>Your daily ritual</Display>
+        
         <Body>A little space for yourself, one day at a time.</Body>
       </View>
       <Card style={styles.card}>
