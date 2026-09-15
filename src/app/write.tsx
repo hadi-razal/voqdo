@@ -1,5 +1,6 @@
 import { CHALLENGES } from '@/lib/challenges';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useRef } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -18,10 +19,28 @@ export default function Write() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { composeDraft, writing: text, setWriting: setText } = useJournal();
-  const { prompt, challengeId, challengeStep } = useLocalSearchParams<{ prompt?: string; challengeId?: string; challengeStep?: string }>();
+  const { prompt, challengeId, challengeStep } = useLocalSearchParams<{
+    prompt?: string;
+    challengeId?: string;
+    challengeStep?: string;
+  }>();
   const journey = CHALLENGES.find((item) => item.id === challengeId);
   const step = Number(challengeStep);
-  const isJourney = !!journey && Number.isInteger(step) && step >= 0 && step < journey.prompts.length;
+  const isJourney =
+    !!journey && Number.isInteger(step) && step >= 0 && step < journey.prompts.length;
+  const seededPrompt = useRef<string | null>(null);
+
+  // If the editor is empty and a prompt arrived, seed it as a soft starter line.
+  useEffect(() => {
+    const next = typeof prompt === 'string' ? prompt.trim() : '';
+    if (!next || seededPrompt.current === next) return;
+    if (text.trim()) {
+      seededPrompt.current = next;
+      return;
+    }
+    seededPrompt.current = next;
+    setText(`${next}\n\n`);
+  }, [prompt, text, setText]);
 
   const goBack = () => {
     if (router.canGoBack()) router.back();

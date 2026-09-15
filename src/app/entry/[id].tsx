@@ -71,9 +71,31 @@ export default function EntryDetail() {
             : ''}
         </Text>
         <Display size={28}>{entry.title}</Display>
+        {entry.source === 'voice' ? (
+          <View style={styles.sourceBadge}>
+            <Icon name="mic" size={13} color={colors.accent} strokeWidth={1.7} />
+            <Text style={styles.sourceText}>
+              Voice
+              {entry.durationMs > 0 ? ` · ${formatDuration(entry.durationMs)}` : ''}
+              {entry.audioUri ? ' · kept on this device' : ''}
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.sourceBadge}>
+            <Icon name="pencil" size={13} color={colors.muted} strokeWidth={1.7} />
+            <Text style={[styles.sourceText, { color: colors.muted }]}>Written</Text>
+          </View>
+        )}
       </View>
 
-      <TextButton label="Edit entry" tone="accent" onPress={() => { editEntry(entry); router.push('/review'); }} />
+      <TextButton
+        label="Edit entry"
+        tone="accent"
+        onPress={() => {
+          editEntry(entry);
+          router.push('/review');
+        }}
+      />
       <Prose style={styles.body}>{entry.body}</Prose>
 
       <View style={styles.divider} />
@@ -167,6 +189,20 @@ const styles = StyleSheet.create({
   content: { paddingBottom: 40 },
   head: { paddingHorizontal: gutter, gap: 8, marginTop: 6 },
   stamp: { fontFamily: font.body, fontSize: 12.5, color: colors.muted },
+  sourceBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 6,
+    marginTop: 2,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+  },
+  sourceText: { fontFamily: font.medium, fontSize: 12, color: colors.accent },
   body: { paddingHorizontal: gutter, marginTop: 16 },
   divider: {
     height: StyleSheet.hairlineWidth,

@@ -42,7 +42,9 @@ export default function Welcome() {
         </View>
 
         <PrimaryButton label="Let’s Begin" icon="arrowRight" onPress={begin} />
-        <Text style={styles.footer}>A kinder mind is a brighter you.</Text>
+        <Text style={styles.footer}>
+          Kept on this device. Optional AI only when you ask.
+        </Text>
       </View>
     </View>
   );

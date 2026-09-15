@@ -30,6 +30,7 @@ export default function Home() {
 
   const wroteToday = week.some((day) => day.isToday && day.done);
   const quote = QUOTES[new Date().getDate() % QUOTES.length];
+  const prompt = PROMPTS[promptIndex];
 
   return (
     <Screen contentStyle={styles.content}>
@@ -63,6 +64,8 @@ export default function Home() {
 
       <Pressable
         onPress={() => router.push('/record')}
+        accessibilityRole="button"
+        accessibilityLabel="Start journaling"
         style={({ pressed }) => [pressed && { opacity: 0.9 }]}
       >
         <LinearGradient
@@ -74,22 +77,17 @@ export default function Home() {
           <View style={[styles.micRing, glowShadow(colors.accent, 'sm')]}>
             <Icon name="mic" size={26} color={colors.accent} strokeWidth={1.6} />
           </View>
-          <Display size={22}>Tap to Journal</Display>
-          <Body style={{ textAlign: 'center' }}>Speak or type — your thoughts, your way.</Body>
+          <Display size={22}>{wroteToday ? 'Add another page' : 'Tap to Journal'}</Display>
+          <Body style={{ textAlign: 'center' }}>
+            Speak into the mic, or write below — your thoughts, your way.
+          </Body>
         </LinearGradient>
       </Pressable>
 
       <View style={styles.tiles}>
         <ActionTile
-          label={'Voice\nJournal'}
-          bg={colors.surfaceRaised}
-          fg={colors.text}
-          icon="mic"
-          onPress={() => router.push('/record')}
-        />
-        <ActionTile
-          label={'Write\nJournal'}
-          bg="#22412F"
+          label={'Write\ninstead'}
+          bg={colors.successBg}
           fg={colors.success}
           icon="pencil"
           onPress={() => router.push('/write')}
@@ -102,7 +100,7 @@ export default function Home() {
           render={(color) => <ChartIcon size={21} color={color} />}
         />
         <ActionTile
-          label="Categories"
+          label="Browse"
           bg="#33291C"
           fg={colors.glow}
           onPress={() => router.push('/categories')}
@@ -111,12 +109,25 @@ export default function Home() {
       </View>
 
       <HabitCard />
-      <Card onPress={() => router.push('/challenges')} style={{ padding: 18, gap: 8 }}>
-        <Display size={21}>Choose a guided journey</Display><Body>Three prompts. Three days. A small shift in perspective.</Body>
-      </Card>
-      <Card onPress={() => router.push('/reflect')} style={{ padding: 18, gap: 8 }}>
-        <Display size={21}>Your AI reflection room</Display><Body>Revisit your week, ask your journal, or find one small next step.</Body>
-      </Card>
+
+      <View style={styles.secondary}>
+        <Card onPress={() => router.push('/challenges')} style={styles.linkCard}>
+          <Icon name="sprout" size={18} color={colors.success} />
+          <View style={{ flex: 1, gap: 4 }}>
+            <Display size={18}>Guided journeys</Display>
+            <Body>Three prompts. Three days. A small shift.</Body>
+          </View>
+          <Icon name="chevronRight" size={16} color={colors.faint} />
+        </Card>
+        <Card onPress={() => router.push('/reflect')} style={styles.linkCard}>
+          <Icon name="sparkle" size={18} color={colors.accent} />
+          <View style={{ flex: 1, gap: 4 }}>
+            <Display size={18}>Reflection room</Display>
+            <Body>Revisit your week, or find one next step.</Body>
+          </View>
+          <Icon name="chevronRight" size={16} color={colors.faint} />
+        </Card>
+      </View>
 
       <Card style={styles.prompt}>
         <View style={styles.promptHead}>
@@ -132,18 +143,20 @@ export default function Home() {
         </View>
 
         <Pressable
-          onPress={() => router.push({ pathname: '/write', params: { prompt: PROMPTS[promptIndex] } })}
+          onPress={() => router.push({ pathname: '/write', params: { prompt } })}
           style={({ pressed }) => [styles.promptBody, pressed && { opacity: pressedOpacity }]}
         >
-          <Text style={styles.promptText}>{PROMPTS[promptIndex]}</Text>
+          <Text style={styles.promptText}>{prompt}</Text>
           <Icon name="chevronRight" size={16} color={colors.faint} strokeWidth={1.7} />
         </Pressable>
       </Card>
 
-      {entries.length > 0 && (
+      {entries.length > 0 ? (
         <Caption style={styles.countLine}>
           {entries.length} {entries.length === 1 ? 'entry' : 'entries'} so far. Keep going.
         </Caption>
+      ) : (
+        <Caption style={styles.countLine}>Your first page is waiting whenever you are.</Caption>
       )}
     </Screen>
   );
@@ -273,6 +286,14 @@ const styles = StyleSheet.create({
     minHeight: 92,
   },
   tileLabel: { fontFamily: font.medium, fontSize: 11.5, lineHeight: 15, color: colors.text },
+  secondary: { gap: 10 },
+  linkCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+  },
   prompt: { paddingVertical: 14, paddingHorizontal: 16, gap: 10 },
   promptHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   promptTitle: { flex: 1, fontFamily: font.medium, fontSize: 12.5, color: colors.muted },

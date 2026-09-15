@@ -27,6 +27,7 @@ If Metro is already running, use `npm run ios -- --no-bundler`. Speech requires 
 - Saving waits for storage to succeed; failed saves retain the review draft.
 - Tap a daily prompt to bring it into the editor.
 - Edit your name and export your journal as Markdown text through the system share sheet in Profile.
+- Privacy and Terms screens explain local storage, optional AI, and that Pro is a preview.
 - Insights offer 7-day, 30-day, and all-time views; mood chips open search.
 
 Entries and preferences use device-local AsyncStorage. Default keyword suggestions are deterministic and local; optional AI suggestions use OpenRouter only when requested. Export only shares content after you choose a destination in the system share sheet. Nightly notifications, purchases, and cloud backup are not implemented; their screens explicitly show this status.

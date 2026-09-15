@@ -21,7 +21,7 @@ export default function Pro() {
   const { toast } = useToast();
 
   const upgrade = () => {
-    toast('Pro is in development. No purchase or subscription has been created.');
+    toast('Pro is in development. No purchase has been created.');
   };
 
   return (
@@ -29,11 +29,15 @@ export default function Pro() {
       <TopBar onBack={goBack} />
 
       <View style={styles.head}>
-        <Text style={styles.kicker}>VOQDO PRO · PLANNED FEATURES</Text>
+        <Text style={styles.kicker}>VOQDO PRO · PREVIEW</Text>
         <Display size={30}>
           Keep every word,{'\n'}
           <Text style={{ color: colors.accent }}>search every month</Text>
         </Display>
+        <Body>
+          Everything in the free journal works today. Pro is a planned upgrade — nothing is billed
+          yet.
+        </Body>
       </View>
 
       <View style={styles.grid}>
@@ -68,7 +72,7 @@ export default function Pro() {
         </View>
 
         <Body style={{ color: colors.muted }}>
-          Planned pricing. Pro features and purchases are not available yet.
+          Planned pricing only. Habit XP, journeys, and local journaling stay free.
         </Body>
 
         <Pressable
@@ -79,19 +83,22 @@ export default function Pro() {
             pressed && { opacity: 0.85 },
           ]}
         >
-          <Text style={styles.ctaLabel}>
-            {'Preview only · Coming soon'}
-          </Text>
+          <Text style={styles.ctaLabel}>Preview only · Coming soon</Text>
         </Pressable>
       </View>
 
       <View style={styles.legal}>
-        {['Restore Purchases', 'Terms', 'Privacy'].map((item, i) => (
-          <View key={item} style={styles.legalItem}>
-            {i > 0 && <Text style={styles.legalDot}>·</Text>}
-            <Text style={styles.legalText}>{item}</Text>
-          </View>
-        ))}
+        <Pressable onPress={() => toast('No purchases to restore yet.')} hitSlop={8}>
+          <Text style={styles.legalText}>Restore</Text>
+        </Pressable>
+        <Text style={styles.legalDot}>·</Text>
+        <Pressable onPress={() => router.push('/terms')} hitSlop={8}>
+          <Text style={styles.legalText}>Terms</Text>
+        </Pressable>
+        <Text style={styles.legalDot}>·</Text>
+        <Pressable onPress={() => router.push('/privacy')} hitSlop={8}>
+          <Text style={styles.legalText}>Privacy</Text>
+        </Pressable>
       </View>
     </Screen>
   );
@@ -100,7 +107,12 @@ export default function Pro() {
 const styles = StyleSheet.create({
   content: { paddingHorizontal: gutter, paddingBottom: 32, gap: 20 },
   head: { gap: 10, marginTop: 6 },
-  kicker: { fontFamily: font.medium, fontSize: 10.5, letterSpacing: 1.6, color: colors.accent },
+  kicker: {
+    fontFamily: font.medium,
+    fontSize: 10.5,
+    letterSpacing: 1.6,
+    color: colors.accent,
+  },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 9 },
   benefit: { width: '48%', padding: 13, gap: 10 },
   benefitText: { fontFamily: font.medium, fontSize: 12.5, lineHeight: 17, color: colors.text },
@@ -113,7 +125,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   priceTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  priceKicker: { fontFamily: font.medium, fontSize: 10.5, letterSpacing: 1.5, color: colors.muted },
+  priceKicker: {
+    fontFamily: font.medium,
+    fontSize: 10.5,
+    letterSpacing: 1.5,
+    color: colors.muted,
+  },
   trial: {
     paddingVertical: 5,
     paddingHorizontal: 11,
@@ -132,8 +149,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   ctaLabel: { fontFamily: font.semi, fontSize: 15, color: colors.accentInk },
-  legal: { flexDirection: 'row', justifyContent: 'center', gap: 8 },
-  legalItem: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  legal: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 },
   legalDot: { fontFamily: font.body, fontSize: 12, color: colors.faint },
-  legalText: { fontFamily: font.body, fontSize: 12, color: colors.faint },
+  legalText: { fontFamily: font.body, fontSize: 12, color: colors.muted },
 });

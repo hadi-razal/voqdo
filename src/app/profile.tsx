@@ -32,11 +32,34 @@ export default function Profile() {
   const { entries, streak, settings, updateSettings, resetAll } = useJournal();
   const { toast } = useToast();
   const [name, setName] = useState(settings.name);
+
+  const saveName = () => {
+    const next = name.trim() || 'You';
+    setName(next);
+    if (next !== settings.name) {
+      updateSettings({ name: next });
+      toast('Name saved');
+    }
+  };
+
   const exportJournal = async () => {
-    if (!entries.length) { toast('Write your first entry before exporting'); return; }
+    if (!entries.length) {
+      toast('Write your first entry before exporting');
+      return;
+    }
     try {
-      await Share.share({ title: 'VOQDO journal', message: entries.map((entry) => `# ${entry.title}\n\n${new Date(entry.createdAt).toLocaleString()} · ${entry.mood}\n\n${entry.body}\n\nTags: ${entry.categories.join(', ')}`).join('\n\n---\n\n') });
-    } catch { toast('Could not open sharing. Please try again.'); }
+      await Share.share({
+        title: 'VOQDO journal',
+        message: entries
+          .map(
+            (entry) =>
+              `# ${entry.title}\n\n${new Date(entry.createdAt).toLocaleString()} · ${entry.mood}\n\n${entry.body}\n\nTags: ${entry.categories.join(', ')}`
+          )
+          .join('\n\n---\n\n'),
+      });
+    } catch {
+      toast('Could not open sharing. Please try again.');
+    }
   };
 
   const words = entries.reduce(
@@ -59,7 +82,13 @@ export default function Profile() {
     {
       label: 'JOURNALLING',
       rows: [
-        { label: 'Your daily ritual', value: `${settings.weeklyGoal} days / week`, icon: 'sprout', cat: 'Personal Growth', onPress: () => router.push('/progress') },
+        {
+          label: 'Your daily ritual',
+          value: `${settings.weeklyGoal} days / week`,
+          icon: 'sprout',
+          cat: 'Personal Growth',
+          onPress: () => router.push('/progress'),
+        },
         {
           label: 'Categories',
           value: `${CATEGORY_KEYS.length} active`,
@@ -68,12 +97,19 @@ export default function Profile() {
           onPress: () => router.push('/categories'),
         },
         {
-          label: 'Nightly reminder',
-          value: 'Coming soon',
-          icon: 'bell',
-          cat: 'Personal Growth',
+          label: 'Guided journeys',
+          value: '3 journeys',
+          icon: 'sprout',
+          cat: 'Gratitude',
+          onPress: () => router.push('/challenges'),
         },
-        { label: 'Voice language', value: 'English (US)', icon: 'mic', cat: 'Self-Care' },
+        {
+          label: 'Reflection room',
+          value: 'Optional AI',
+          icon: 'sparkle',
+          cat: 'Reflection',
+          onPress: () => router.push('/reflect'),
+        },
       ],
     },
     {
@@ -81,7 +117,7 @@ export default function Profile() {
       rows: [
         {
           label: 'VOQDO Pro',
-          value: `${MONTHLY_PRICE_LABEL}/month`,
+          value: `${MONTHLY_PRICE_LABEL}/month · preview`,
           icon: 'star',
           cat: 'Gratitude',
           onPress: () => router.push('/pro'),
@@ -91,9 +127,28 @@ export default function Profile() {
     {
       label: 'ABOUT',
       rows: [
-        { label: 'Export journal', value: 'Markdown', icon: 'export', cat: 'Reflection', onPress: exportJournal },
-        { label: 'Privacy', value: 'Local + optional AI', icon: 'lock', cat: 'Reflection' },
-        { label: 'Version', value: '1.0', icon: 'info', cat: 'Reflection' },
+        {
+          label: 'Export journal',
+          value: 'Markdown',
+          icon: 'export',
+          cat: 'Reflection',
+          onPress: exportJournal,
+        },
+        {
+          label: 'Privacy',
+          value: 'Local + optional AI',
+          icon: 'lock',
+          cat: 'Reflection',
+          onPress: () => router.push('/privacy'),
+        },
+        {
+          label: 'Terms',
+          value: 'How VOQDO works',
+          icon: 'info',
+          cat: 'Reflection',
+          onPress: () => router.push('/terms'),
+        },
+        { label: 'Version', value: '1.0.0', icon: 'info', cat: 'Reflection' },
         {
           label: 'Erase journal',
           value: `${entries.length} ${entries.length === 1 ? 'entry' : 'entries'}`,
@@ -116,8 +171,23 @@ export default function Profile() {
             {settings.name.trim().charAt(0).toUpperCase() || 'Y'}
           </Text>
         </View>
-        <TextInput accessibilityLabel="Your name" value={name} onChangeText={setName} maxLength={40} returnKeyType="done" onEndEditing={() => { const next = name.trim() || 'You'; setName(next); updateSettings({ name: next }); }} style={{ fontFamily: font.display, fontSize: 25, color: colors.text, textAlign: 'center', minWidth: 140, padding: 8, borderBottomWidth: 1, borderBottomColor: colors.border }} />
-        <Body>Journalling since your first entry.</Body>
+        <TextInput
+          accessibilityLabel="Your name"
+          value={name}
+          onChangeText={setName}
+          maxLength={40}
+          returnKeyType="done"
+          onEndEditing={saveName}
+          onSubmitEditing={saveName}
+          placeholder="Your name"
+          placeholderTextColor={colors.faint}
+          style={styles.nameInput}
+        />
+        <Body>
+          {entries.length
+            ? `Journalling since your first entry · ${words.toLocaleString()} words`
+            : 'Your journal begins when you write the first page.'}
+        </Body>
       </View>
 
       <View style={styles.stats}>
@@ -150,9 +220,7 @@ export default function Profile() {
                     size={34}
                     iconSize={15}
                   />
-                  <Text
-                    style={[styles.rowLabel, row.destructive && { color: colors.warn }]}
-                  >
+                  <Text style={[styles.rowLabel, row.destructive && { color: colors.warn }]}>
                     {row.label}
                   </Text>
                   <Text style={styles.rowValue}>{row.value}</Text>
@@ -180,7 +248,13 @@ function Stat({ n, label }: { n: number; label: string }) {
 
 const styles = StyleSheet.create({
   content: { paddingBottom: 30 },
-  identity: { alignItems: 'center', gap: 8, marginTop: 8, marginBottom: 20, paddingHorizontal: gutter },
+  identity: {
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 8,
+    marginBottom: 20,
+    paddingHorizontal: gutter,
+  },
   avatar: {
     width: 68,
     height: 68,
@@ -193,6 +267,16 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   avatarLetter: { fontFamily: font.display, fontSize: 26, color: colors.accent },
+  nameInput: {
+    fontFamily: font.display,
+    fontSize: 25,
+    color: colors.text,
+    textAlign: 'center',
+    minWidth: 140,
+    padding: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
   stats: { flexDirection: 'row', gap: 9, paddingHorizontal: gutter, marginBottom: 22 },
   stat: {
     flex: 1,
@@ -207,7 +291,13 @@ const styles = StyleSheet.create({
   statN: { fontFamily: font.display, fontSize: 24, color: colors.text },
   statLabel: { fontFamily: font.body, fontSize: 11.5, color: colors.faint },
   group: { paddingHorizontal: gutter, gap: 10, marginBottom: 18 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14 },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+  },
   rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
   rowLabel: { flex: 1, fontFamily: font.medium, fontSize: 14, color: colors.text },
   rowValue: { fontFamily: font.body, fontSize: 12.5, color: colors.faint },

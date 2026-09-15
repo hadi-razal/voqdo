@@ -1,12 +1,13 @@
 {
   "expo": {
-    "name": "voqdo",
+    "name": "VOQDO",
     "slug": "voqdo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "voqdo",
     "userInterfaceStyle": "dark",
+    "primaryColor": "#0B0D11",
     "ios": {
       "icon": "./assets/expo.icon",
       "infoPlist": {

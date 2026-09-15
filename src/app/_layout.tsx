@@ -98,6 +98,9 @@ function RootNavigator({ fontsLoaded }: { fontsLoaded: boolean }) {
         <Stack.Screen name="categories" />
         <Stack.Screen name="profile" />
         <Stack.Screen name="progress" />
+        <Stack.Screen name="pro" />
+        <Stack.Screen name="privacy" />
+        <Stack.Screen name="terms" />
         <Stack.Screen name="challenges" />
         <Stack.Screen name="reflect" />
         <Stack.Screen name="entry/[id]" />
