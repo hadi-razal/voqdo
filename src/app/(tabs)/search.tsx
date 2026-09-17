@@ -87,7 +87,7 @@ export default function Search() {
           </View>
           {results.length === 0 && (
             <EmptyState
-              icon="search"
+              pose="wonder"
               title="Nothing matched"
               body="Try a different word, or one of your tags."
             />
@@ -96,7 +96,7 @@ export default function Search() {
       )}
 
       {!searching && entries.length === 0 && (
-        <EmptyState title="Nothing to search yet" body="Your entries will show up here." />
+        <EmptyState title="Nothing to search yet" pose="peek" body="Your entries will show up here." />
       )}
     </Screen>
   );

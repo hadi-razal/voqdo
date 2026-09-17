@@ -13,6 +13,8 @@ import {
 import { fullStamp, useJournal } from '@/context/journal';
 import { useToast } from '@/context/toast';
 import { Icon, SparkIcon } from '@/icons';
+import { MascotTalk } from '@/components/Mascot';
+import { companionForMood } from '@/lib/mascot';
 import { formatDuration } from '@/lib/analyze';
 import { confirmDestructive } from '@/lib/confirm';
 import { colors, font, gutter, moodStyle } from '@/theme';
@@ -64,6 +66,12 @@ export default function EntryDetail() {
       <TopBar onBack={goBack} onMore={confirmDelete} />
 
       <View style={styles.head}>
+        <MascotTalk
+          pose={companionForMood(entry.mood).pose}
+          line={companionForMood(entry.mood).line}
+          taps={companionForMood(entry.mood).taps}
+          size={84}
+        />
         <Text style={styles.stamp}>
           {fullStamp(entry.createdAt)}
           {entry.source === 'voice' && entry.durationMs > 0

@@ -14,6 +14,8 @@ import {
 import { useJournal } from '@/context/journal';
 import { useToast } from '@/context/toast';
 import { Icon, SparkIcon } from '@/icons';
+import { MascotTalk } from '@/components/Mascot';
+import { companionForMood } from '@/lib/mascot';
 import { confirmDestructive } from '@/lib/confirm';
 import { formatDuration } from '@/lib/analyze';
 import { challengeProgress } from '@/lib/challenges';
@@ -58,6 +60,7 @@ export default function Review() {
   if (!draft) return null;
 
   const mood = moodStyle(draft.mood);
+  const moodCompanion = companionForMood(draft.mood);
 
   const askAi = async () => {
     if (aiRequest.current || isSaving || !draft.body.trim()) return;
@@ -181,7 +184,14 @@ export default function Review() {
       </View>
 
       <View style={[styles.section, { marginTop: 18 }]}>
+        <MascotTalk
+          pose={moodCompanion.pose}
+          line={moodCompanion.line}
+          taps={moodCompanion.taps}
+          size={72}
+        />
         <Kicker>HOW DID IT FEEL?</Kicker>
+        <Body>Tap a mood — Sprout will sit with it. Tap Sprout for another line.</Body>
         <View style={styles.chips}>
           {(['Calm', 'Bright', 'Heavy', 'Restless', 'Tender'] as const).map((value) => (
             <Pressable disabled={isAnalyzing || isSaving} key={value} accessibilityRole="button" accessibilityState={{ selected: draft.mood === value }} onPress={() => setDraft({ ...draft, mood: value })} style={[styles.chip, { borderColor: draft.mood === value ? moodStyle(value).color : colors.border, backgroundColor: draft.mood === value ? moodStyle(value).bg : 'transparent' }]}>

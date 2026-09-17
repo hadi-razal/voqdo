@@ -52,6 +52,7 @@ export default function Journal() {
 
       {entries.length === 0 && (
         <EmptyState
+          pose="journal"
           title="Your first entry is waiting"
           body="Tap the plus below and talk for a minute, or write a few lines."
         />

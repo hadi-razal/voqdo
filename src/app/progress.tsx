@@ -1,5 +1,7 @@
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Mascot, MascotTalk } from '@/components/Mascot';
+import { companionForProgress } from '@/lib/mascot';
 import { Body, Card, Display, Kicker, PrimaryButton, Screen, TopBar } from '@/components/vq';
 import { useJournal } from '@/context/journal';
 import { useHabitProgress } from '@/lib/useHabitProgress';
@@ -19,12 +21,20 @@ export default function Progress() {
   const { settings, updateSettings } = useJournal();
   const progress = useHabitProgress();
   const fillPercent = Math.min(100, (progress.levelXp / LEVEL_XP) * 100);
+  const companion = companionForProgress({
+    todayDone: progress.todayDone,
+    weeklyComplete: progress.weeklyComplete,
+    streak: progress.streak,
+    totalDays: progress.totalDays,
+  });
+  const plantPoses = ['grow', 'bloom', 'star', 'party'] as const;
 
   return (
     <Screen contentStyle={styles.content}>
       <TopBar onBack={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
 
       <View style={styles.section}>
+        <MascotTalk pose={companion.pose} line={companion.line} taps={companion.taps} size={86} />
         <Kicker color={colors.success}>SMALL STEPS, REAL GROWTH</Kicker>
         <Display size={29}>Your daily ritual</Display>
         <Body>A little space for yourself, one day at a time.</Body>
@@ -137,14 +147,14 @@ export default function Progress() {
       <Card style={styles.card}>
         <Kicker color={colors.success}>YOUR GROWING GARDEN</Kicker>
         <View style={styles.row}>
-          {PLANTS.map((plant) => {
+          {PLANTS.map((plant, i) => {
             const grown = progress.totalDays >= plant.days;
             return (
               <View key={plant.name} style={{ flex: 1, alignItems: 'center', gap: 8 }}>
-                <Icon
-                  name={grown ? 'sprout' : 'lock'}
-                  size={28}
-                  color={grown ? colors.success : colors.faint}
+                <Mascot
+                  pose={grown ? plantPoses[i] : 'rest'}
+                  size={40}
+                  style={{ opacity: grown ? 1 : 0.38 }}
                 />
                 <Text style={styles.statLabel}>{plant.name}</Text>
                 <Text style={styles.statLabel}>{grown ? 'Grown' : `${plant.days} days`}</Text>
@@ -163,11 +173,15 @@ export default function Progress() {
         </Kicker>
         {progress.badges.map((badge) => (
           <Card key={badge.id} style={styles.badge}>
-            <Icon
-              name={badge.earned ? 'star' : 'lock'}
-              color={badge.earned ? colors.accent : colors.faint}
-              size={22}
-            />
+            {badge.earned ? (
+              <Mascot pose="star" size={40} />
+            ) : (
+              <Icon
+                name="lock"
+                color={colors.faint}
+                size={22}
+              />
+            )}
             <View style={{ flex: 1, gap: 4 }}>
               <Text style={styles.badgeTitle}>{badge.name}</Text>
               <Body>{badge.description}</Body>

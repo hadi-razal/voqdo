@@ -1,4 +1,4 @@
-import type { ReactNode, Ref } from 'react';
+import { useState, type ReactNode, type Ref } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -10,7 +10,9 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Mascot } from '@/components/Mascot';
 import { Icon, type IconName } from '@/icons';
+import { type MascotPose } from '@/lib/mascot';
 import {
   catStyle,
   colors,
@@ -219,6 +221,9 @@ export function PrimaryButton({
     <Pressable
       onPress={onPress}
       disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: !!disabled }}
       style={({ pressed }) => [
         styles.primary,
         glowShadow(colors.accent, 'md'),
@@ -320,20 +325,26 @@ export function TopBar({
 export function EmptyState({
   title,
   body,
-  icon = 'moon',
+  pose = 'peek',
 }: {
   title: string;
   body?: string;
   icon?: IconName;
+  pose?: MascotPose;
 }) {
+  const [tick, setTick] = useState(0);
+
   return (
-    <View style={styles.empty}>
-      <View style={styles.emptyIcon}>
-        <Icon name={icon} size={22} color={colors.faint} strokeWidth={1.5} />
-      </View>
+    <Pressable
+      onPress={() => setTick((n) => n + 1)}
+      accessibilityRole="button"
+      accessibilityLabel={`${title}. Tap Sprout for a wink.`}
+      style={styles.empty}
+    >
+      <Mascot pose={tick % 2 === 1 ? 'wink' : pose} size={108} />
       <Display size={19}>{title}</Display>
       {body && <Body style={{ textAlign: 'center' }}>{body}</Body>}
-    </View>
+    </Pressable>
   );
 }
 
@@ -385,17 +396,6 @@ const styles = StyleSheet.create({
   },
   topSlot: { minWidth: 38, justifyContent: 'center' },
   empty: { alignItems: 'center', gap: 10, paddingVertical: 44, paddingHorizontal: 30 },
-  emptyIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 4,
-  },
   note: {
     flexDirection: 'row',
     alignItems: 'center',

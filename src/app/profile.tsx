@@ -2,6 +2,8 @@ import { MONTHLY_PRICE_LABEL } from '@/lib/pricing';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Pressable, Share, StyleSheet, Text, TextInput, View } from 'react-native';
+import { BrandMark } from '@/components/BrandMark';
+import { MascotTalk } from '@/components/Mascot';
 import { Body, Card, IconTile, Kicker, Screen, TopBar } from '@/components/vq';
 import { useJournal } from '@/context/journal';
 import { useToast } from '@/context/toast';
@@ -166,11 +168,7 @@ export default function Profile() {
       <TopBar onBack={goBack} />
 
       <View style={styles.identity}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarLetter}>
-            {settings.name.trim().charAt(0).toUpperCase() || 'Y'}
-          </Text>
-        </View>
+        <BrandMark size={88} glow />
         <TextInput
           accessibilityLabel="Your name"
           value={name}
@@ -188,6 +186,21 @@ export default function Profile() {
             ? `Journalling since your first entry · ${words.toLocaleString()} words`
             : 'Your journal begins when you write the first page.'}
         </Body>
+        <MascotTalk
+          pose="wave"
+          size={72}
+          layout="stack"
+          line={
+            settings.name.trim() && settings.name.trim() !== 'You'
+              ? `Hey ${settings.name.trim()}. This is your space.`
+              : 'This space stays on this device.'
+          }
+          taps={[
+            streak > 0 ? `${streak}-day streak. Quietly proud.` : 'A first page starts the garden.',
+            'Export anytime. Erase anytime.',
+            'Tap me. I like saying hi.',
+          ]}
+        />
       </View>
 
       <View style={styles.stats}>
@@ -255,18 +268,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     paddingHorizontal: gutter,
   },
-  avatar: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    backgroundColor: colors.surfaceRaised,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 4,
-  },
-  avatarLetter: { fontFamily: font.display, fontSize: 26, color: colors.accent },
   nameInput: {
     fontFamily: font.display,
     fontSize: 25,

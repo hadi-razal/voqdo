@@ -43,7 +43,7 @@ export default function CategoryDetail() {
       </View>
 
       {entries.length === 0 && (
-        <EmptyState title="Nothing here yet" body={`Entries tagged ${cat} will collect here.`} />
+        <EmptyState pose="study" title="Nothing here yet" body={`Entries tagged ${cat} will collect here.`} />
       )}
     </Screen>
   );

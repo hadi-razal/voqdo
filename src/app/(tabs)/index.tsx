@@ -1,4 +1,6 @@
 import { HabitCard } from '@/components/HabitCard';
+import { BrandMark } from '@/components/BrandMark';
+import { MascotBuddy } from '@/components/Mascot';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -35,6 +37,7 @@ export default function Home() {
   return (
     <Screen contentStyle={styles.content}>
       <View style={styles.header}>
+        <BrandMark size={42} />
         <View style={{ flex: 1, gap: 6 }}>
           <Text style={styles.greeting}>{greeting()},</Text>
           <Display size={25}>
@@ -55,6 +58,8 @@ export default function Home() {
       </View>
 
       <Text style={styles.quote}>{quote}</Text>
+
+      <MascotBuddy wroteToday={wroteToday} empty={entries.length === 0} name={settings.name} />
 
       <View style={styles.week}>
         {week.map((day) => (
@@ -223,7 +228,7 @@ function greeting(date = new Date()): string {
 
 const styles = StyleSheet.create({
   content: { paddingHorizontal: gutter, paddingBottom: 24, gap: 16 },
-  header: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   greeting: { fontFamily: font.body, fontSize: 15, color: colors.muted },
   avatar: {
     width: 38,
@@ -234,7 +239,6 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 4,
   },
   avatarLetter: { fontFamily: font.medium, fontSize: 14, color: colors.text },
   quote: {

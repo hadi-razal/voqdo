@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { MascotTalk } from '@/components/Mascot';
 import { Body, Card, Display, Kicker, PrimaryButton, Screen, TextButton, TopBar } from '@/components/vq';
 import { useJournal } from '@/context/journal';
 import { useToast } from '@/context/toast';
@@ -64,7 +65,29 @@ export default function Reflect() {
   };
   return <Screen scrollRef={scrollRef} contentStyle={styles.content}>
     <TopBar onBack={() => router.canGoBack() ? router.back() : router.replace('/')} />
-    <View style={styles.section}><Kicker color={colors.accent}>A LITTLE PERSPECTIVE</Kicker><Display size={28}>Reflection room</Display><Body>Small-model AI to help you revisit what matters. You choose the words it sees.</Body></View>
+    <View style={styles.section}>
+      <MascotTalk
+        pose={busy ? 'think' : result ? 'study' : 'ponder'}
+        line={
+          busy
+            ? 'Reading the pages you chose…'
+            : result
+              ? 'Here’s a small perspective.'
+              : 'Choose a few pages. I’ll sit with them.'
+        }
+        taps={
+          busy
+            ? ['Almost there.', 'Nothing extra is sent.']
+            : result
+              ? ['These are suggestions, not verdicts.', 'Save it if it feels true.']
+              : ['You pick what I see.', 'A recap, a next step, or a question.']
+        }
+        size={88}
+      />
+      <Kicker color={colors.accent}>A LITTLE PERSPECTIVE</Kicker>
+      <Display size={28}>Reflection room</Display>
+      <Body>Small-model AI to help you revisit what matters. You choose the words it sees.</Body>
+    </View>
     {readingSaved && <View style={styles.section}><TextButton label="Create a new reflection" onPress={() => { setReadingSaved(false); setResult(null); }} /></View>}
     {!readingSaved && <>
     <View style={[styles.section, styles.modes]}>{MODES.map((item) => <Pressable key={item.id} disabled={busy} accessibilityRole="button" accessibilityState={{ selected: mode === item.id }} onPress={() => setMode(item.id)} style={[styles.pill, mode === item.id && { backgroundColor: colors.accent }]}><Text style={[styles.pillText, mode === item.id && { color: colors.accentInk }]}>{item.label}</Text></Pressable>)}</View>

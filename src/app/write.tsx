@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Body, Display, NoteCard, PrimaryButton, TopBar } from '@/components/vq';
+import { MascotTalk } from '@/components/Mascot';
+import { companionForWrite } from '@/lib/mascot';
 import { useJournal } from '@/context/journal';
 import { colors, font, gutter, tabularNums } from '@/theme';
 
@@ -49,6 +51,7 @@ export default function Write() {
 
   const words = text.trim() ? text.trim().split(/\s+/).length : 0;
   const canSave = words >= 3;
+  const companion = companionForWrite({ words, isJourney });
 
   const submit = () => {
     if (!canSave) return;
@@ -64,6 +67,7 @@ export default function Write() {
       <TopBar onBack={goBack} />
 
       <View style={styles.head}>
+        <MascotTalk pose={companion.pose} line={companion.line} taps={companion.taps} size={72} />
         <Display size={23}>{isJourney ? `${journey.title} · ${step + 1}/3` : "Write Journal"}</Display>
         <Body>{prompt || "Say it however it comes out. Nothing here is graded."}</Body>
       </View>
@@ -98,7 +102,7 @@ export default function Write() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
-  head: { paddingHorizontal: gutter, gap: 6, marginTop: 4, marginBottom: 12 },
+  head: { paddingHorizontal: gutter, gap: 6, marginTop: 4, marginBottom: 12, alignItems: 'flex-start' },
   input: {
     flex: 1,
     marginHorizontal: gutter,

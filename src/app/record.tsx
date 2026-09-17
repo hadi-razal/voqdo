@@ -4,7 +4,8 @@ import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-nativ
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Body, Display, NoteCard, PrimaryButton, TextButton, TopBar } from '@/components/vq';
 import { useJournal } from '@/context/journal';
-import { Icon } from '@/icons';
+import { Mascot } from '@/components/Mascot';
+import { companionForRecord, type MascotPose } from '@/lib/mascot';
 import { formatDuration } from '@/lib/analyze';
 import { useVoiceCapture } from '@/lib/useVoiceCapture';
 import { colors, font, glowShadow, gutter, tabularNums } from '@/theme';
@@ -43,6 +44,11 @@ export default function Record() {
 
   const listening = phase === 'listening';
   const processing = phase === 'processing';
+  const companion = companionForRecord({ error: !!error, processing });
+  const [tick, setTick] = useState(0);
+  const lines = [companion.line, ...companion.taps];
+  const shown = lines[tick % lines.length];
+  const pose: MascotPose = tick > 0 && tick % lines.length === 0 ? 'wink' : companion.pose;
 
   const dismiss = () => {
     cancel();
@@ -61,11 +67,19 @@ export default function Record() {
       </View>
 
       <View style={styles.stage}>
-        <Orb active={listening} processing={processing} />
+        <Pressable
+          onPress={() => setTick((n) => n + 1)}
+          accessibilityRole="button"
+          accessibilityLabel={`${shown}. Tap Sprout for another line.`}
+        >
+          <Orb active={listening} processing={processing} pose={pose} />
+        </Pressable>
 
         <Text style={styles.status}>
           {error ? 'Couldn’t listen' : processing ? 'Just a moment…' : 'Listening...'}
         </Text>
+        <Text style={styles.companion}>{shown}</Text>
+        <Text style={styles.tapHint}>Tap Sprout</Text>
 
         {error ? (
           <Text style={styles.error}>{error}</Text>
@@ -114,7 +128,7 @@ export default function Record() {
 }
 
 /** Concentric amber rings that breathe while the mic is open. */
-function Orb({ active, processing }: { active: boolean; processing: boolean }) {
+function Orb({ active, processing, pose }: { active: boolean; processing: boolean; pose: MascotPose }) {
   const [breathe] = useState(() => new Animated.Value(0));
   const [spin] = useState(() => new Animated.Value(0));
 
@@ -177,7 +191,7 @@ function Orb({ active, processing }: { active: boolean; processing: boolean }) {
       <Animated.View
         style={[styles.core, glowShadow(colors.glow, 'lg'), { transform: [{ scale }] }]}
       >
-        <Icon name="mic" size={30} color={active ? colors.glow : colors.muted} strokeWidth={1.7} />
+        <Mascot pose={pose} size={78} />
       </Animated.View>
     </View>
   );
@@ -283,6 +297,7 @@ const styles = StyleSheet.create({
     width: 104,
     height: 104,
     borderRadius: 52,
+    overflow: 'hidden',
     borderWidth: 1.6,
     borderColor: colors.glow,
     backgroundColor: '#191410',
@@ -290,6 +305,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   status: { fontFamily: font.body, fontSize: 15, color: colors.text },
+  companion: {
+    fontFamily: font.displayItalic,
+    fontStyle: 'italic',
+    fontSize: 15,
+    lineHeight: 22,
+    color: colors.text,
+    textAlign: 'center',
+    maxWidth: 280,
+  },
+  tapHint: { fontFamily: font.medium, fontSize: 11, color: colors.faint },
   error: { fontFamily: font.body, fontSize: 13.5, lineHeight: 20, color: colors.warn, textAlign: 'center' },
   wave: { flexDirection: 'row', alignItems: 'center', gap: 3, height: 48 },
   waveBar: { width: 2.6, borderRadius: 1.3, backgroundColor: colors.glow },

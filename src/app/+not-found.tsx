@@ -1,8 +1,8 @@
 import { useRouter } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { MascotTalk } from '@/components/Mascot';
 import { Body, Display, PrimaryButton, Screen } from '@/components/vq';
-import { Icon } from '@/icons';
-import { colors, gutter } from '@/theme';
+import { gutter } from '@/theme';
 
 /** Shown for any link that does not resolve — keeps the app's voice. */
 export default function NotFound() {
@@ -10,9 +10,14 @@ export default function NotFound() {
 
   return (
     <Screen contentStyle={styles.content}>
-      <View style={styles.icon}>
-        <Icon name="moon" size={26} color={colors.faint} strokeWidth={1.5} />
-      </View>
+      <MascotTalk
+        pose="peek"
+        size={120}
+        layout="stack"
+        bare
+        line="That path isn’t here."
+        taps={['Your journal is still where you left it.', 'Home is one tap away.']}
+      />
       <Display size={24}>Nothing here</Display>
       <Body style={styles.body}>
         That page does not exist. Your journal is still where you left it.
@@ -29,17 +34,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: gutter,
     gap: 10,
-  },
-  icon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 6,
   },
   body: { textAlign: 'center' },
   cta: { marginTop: 14, alignSelf: 'stretch' },

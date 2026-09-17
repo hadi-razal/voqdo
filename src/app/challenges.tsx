@@ -1,6 +1,8 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { MascotTalk } from '@/components/Mascot';
+import { companionForChallenge } from '@/lib/mascot';
 import { Body, Card, Display, Kicker, PrimaryButton, Screen, TopBar } from '@/components/vq';
 import { useJournal } from '@/context/journal';
 import { CHALLENGES, challengeProgress } from '@/lib/challenges';
@@ -11,9 +13,16 @@ export default function Challenges() {
   const { entries } = useJournal();
   const [now, setNow] = useState(() => Date.now());
   useFocusEffect(useCallback(() => { setNow(Date.now()); const timer = setInterval(() => setNow(Date.now()), 60000); return () => clearInterval(timer); }, []));
+  const snapshots = CHALLENGES.map((challenge) => challengeProgress(entries, challenge.id, now)!);
+  const companion = companionForChallenge({
+    anyDone: snapshots.some((item) => item.done),
+    completedBest: Math.max(0, ...snapshots.map((item) => item.completed)),
+  });
   return <Screen contentStyle={{ paddingBottom: 40, gap: 18 }}>
     <TopBar onBack={() => router.canGoBack() ? router.back() : router.replace('/')} />
-    <View style={styles.head}><Kicker color={colors.success}>THREE DAYS, ONE SMALL SHIFT</Kicker><Display size={28}>Guided journeys</Display><Body>One prompt on each of three different days. Take breaks whenever you need; your progress waits for you.</Body></View>
+    <View style={styles.head}>
+      <MascotTalk pose={companion.pose} line={companion.line} taps={companion.taps} size={86} />
+      <Kicker color={colors.success}>THREE DAYS, ONE SMALL SHIFT</Kicker><Display size={28}>Guided journeys</Display><Body>One prompt on each of three different days. Take breaks whenever you need; your progress waits for you.</Body></View>
     {CHALLENGES.map((challenge) => {
       const progress = challengeProgress(entries, challenge.id, now)!;
       return <Card key={challenge.id} style={styles.card}>

@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Mascot } from '@/components/Mascot';
 import { Card, Body, Kicker } from '@/components/vq';
 import { useHabitProgress } from '@/lib/useHabitProgress';
 import { LEVEL_XP } from '@/lib/habits';
@@ -13,7 +14,7 @@ export function HabitCard() {
     <Pressable accessibilityRole="button" accessibilityLabel={`Your progress. Level ${progress.level}, ${progress.xp} XP. ${progress.weeklyDays} of ${progress.weeklyGoal} days this week.`} onPress={() => router.push('/progress')}>
       <Card style={styles.card}>
         <View style={styles.row}>
-          <Icon name="sprout" size={22} color={colors.success} />
+          <Mascot pose={progress.todayDone ? 'cheer' : progress.weeklyComplete ? 'party' : 'grow'} size={52} />
           <View style={{ flex: 1, gap: 4 }}>
             <Kicker color={colors.success}>YOUR DAILY RITUAL</Kicker>
             <Text style={styles.title}>Level {progress.level} · {progress.levelName}</Text>

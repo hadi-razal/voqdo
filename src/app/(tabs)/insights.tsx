@@ -1,6 +1,7 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { MascotTalk } from '@/components/Mascot';
 import { Body, Card, Display, EmptyState, Kicker, PrimaryButton, Screen } from '@/components/vq';
 import { useJournal, type Entry } from '@/context/journal';
 import { Icon, SparkIcon } from '@/icons';
@@ -68,6 +69,7 @@ export default function Insights() {
       <Screen contentStyle={styles.content}>
         <Display size={27}>Insights</Display>
         <EmptyState
+          pose="laptop"
           icon="sparkle"
           title="Nothing to read yet"
           body="Write a couple of entries and patterns will start showing up here."
@@ -79,6 +81,16 @@ export default function Insights() {
   return (
     <Screen contentStyle={styles.content}>
       <View style={{ gap: 6 }}>
+        <MascotTalk
+          pose="laptop"
+          size={72}
+          line="I’ve been reading your pages."
+          taps={[
+            'Patterns stay on this device.',
+            'The AI room is optional — you choose what it sees.',
+            'Your words, counted kindly.',
+          ]}
+        />
         <Display size={27}>Insights</Display>
         <Body>{period === null ? "Your whole journal, in your own words." : `The last ${period} days, in your own words.`}</Body>
       </View>
