@@ -1,15 +1,27 @@
 import type { Analysis } from './analyze';
 import { CATEGORY_KEYS } from '@/theme';
+import { cloudEnabled, invokeFunction } from '@/lib/supabase';
 
-export async function requestAiAnalysis(body: string, signal: AbortSignal): Promise<Analysis & { analysisModel: string }> {
+/**
+ * Production builds call the `ai` Edge Function (signed in, trial/Pro checked,
+ * per-user quotas). Local development without Supabase falls back to the
+ * loopback server in `server/`.
+ */
+async function callAi(task: 'analyze' | 'reflect', payload: { body: string; mode?: string }, signal: AbortSignal) {
+  if (cloudEnabled) return invokeFunction<Record<string, unknown>>('ai', { task, ...payload }, signal);
   const base = process.env.EXPO_PUBLIC_ANALYSIS_URL || (__DEV__ ? 'http://127.0.0.1:8787' : '');
   if (!base) throw new Error('AI is not configured for this build. Local suggestions are still available.');
-  const response = await fetch(`${base.replace(/\/$/, '')}/analyze`, {
+  const response = await fetch(`${base.replace(/\/$/, '')}/${task}`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ body }), signal,
+    body: JSON.stringify(payload), signal,
   });
   const data = await response.json();
   if (!response.ok) throw new Error(typeof data.error === 'string' ? data.error : 'AI is unavailable. Try again later.');
+  return data;
+}
+
+export async function requestAiAnalysis(body: string, signal: AbortSignal): Promise<Analysis & { analysisModel: string }> {
+  const data = await callAi('analyze', { body }, signal);
   const value = data.analysis;
   if (!value || typeof value.title !== 'string' || !value.title.trim() || typeof value.affirmation !== 'string'
     || !['Calm', 'Bright', 'Heavy', 'Restless', 'Tender'].includes(value.mood)
@@ -20,11 +32,7 @@ export async function requestAiAnalysis(body: string, signal: AbortSignal): Prom
 }
 
 export async function requestReflection(body: string, mode: import('./reflections').ReflectionMode, signal: AbortSignal) {
-  const base = process.env.EXPO_PUBLIC_ANALYSIS_URL || (__DEV__ ? 'http://127.0.0.1:8787' : '');
-  if (!base) throw new Error('AI is not configured for this build.');
-  const response = await fetch(`${base.replace(/\/$/, '')}/reflect`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ body, mode }), signal });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || 'AI is unavailable. Please try again later.');
+  const data = await callAi('reflect', { body, mode }, signal);
   const { isReflection } = await import('./reflections');
   if (!isReflection(data.reflection) || typeof data.model !== 'string') throw new Error('The reflection was incomplete. Please try again.');
   const ids = JSON.parse(body).entries.map((entry: { id: string }) => entry.id);

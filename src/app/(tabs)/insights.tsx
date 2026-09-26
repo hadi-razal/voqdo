@@ -2,7 +2,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { MascotTalk } from '@/components/Mascot';
-import { Body, Card, Display, EmptyState, Kicker, PrimaryButton, Screen } from '@/components/vq';
+import { Body, Card, Display, EmptyState, Kicker, Screen, Segmented } from '@/components/vq';
 import { useJournal, type Entry } from '@/context/journal';
 import { Icon, SparkIcon } from '@/icons';
 import {
@@ -67,7 +67,7 @@ export default function Insights() {
   if (entries.length === 0) {
     return (
       <Screen contentStyle={styles.content}>
-        <Display size={27}>Insights</Display>
+        <Display size={30}>Insights</Display>
         <EmptyState
           pose="laptop"
           icon="sparkle"
@@ -91,18 +91,15 @@ export default function Insights() {
             'Your words, counted kindly.',
           ]}
         />
-        <Display size={27}>Insights</Display>
+        <Display size={30}>Insights</Display>
         <Body>{period === null ? "Your whole journal, in your own words." : `The last ${period} days, in your own words.`}</Body>
       </View>
 
-      <PrimaryButton label="Open AI reflection room" onPress={() => router.push('/reflect')} />
-      <View style={styles.pills}>
-        {([7, 30, null] as const).map((days) => (
-          <Pressable key={days ?? 'all'} accessibilityRole="button" accessibilityState={{ selected: period === days }} onPress={() => setPeriod(days)} style={[styles.pill, { backgroundColor: period === days ? colors.accent : colors.surfaceRaised }]}>
-            <Text style={[styles.pillText, { color: period === days ? colors.accentInk : colors.muted }]}>{days === null ? 'All time' : `${days} days`}</Text>
-          </Pressable>
-        ))}
-      </View>
+      <Segmented
+        options={[{ value: '7', label: '7 days' }, { value: '30', label: '30 days' }, { value: 'all', label: 'All time' }]}
+        value={period === null ? 'all' : String(period)}
+        onChange={(value) => setPeriod(value === 'all' ? null : (Number(value) as 7 | 30))}
+      />
       {recent.length === 0 && <Body>No entries in this period. Try a wider time range.</Body>}
       <View style={styles.stats}>
         <Stat n={recent.length} label={recent.length === 1 ? 'Entry' : 'Entries'} />
@@ -158,6 +155,17 @@ export default function Insights() {
         </View>
       )}
 
+      <Card onPress={() => router.push('/reflect')} style={styles.reflect} accessibilityLabel="Open the reflection room">
+        <View style={styles.reflectIcon}>
+          <SparkIcon size={20} color={colors.glow} />
+        </View>
+        <View style={{ flex: 1, gap: 3 }}>
+          <Text style={styles.reflectTitle}>Reflection room</Text>
+          <Body>Let a small AI recap your week or find one next step.</Body>
+        </View>
+        <Icon name="chevronRight" size={16} color={colors.faint} strokeWidth={2} />
+      </Card>
+
       {emotions.length > 0 && (
         <View style={styles.section}>
           <Kicker>EMOTIONS THAT KEEP RETURNING</Kicker>
@@ -199,7 +207,7 @@ const styles = StyleSheet.create({
   stats: { flexDirection: 'row', gap: 9 },
   stat: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.borderSoft,
     borderRadius: radius.lg,
@@ -210,13 +218,13 @@ const styles = StyleSheet.create({
   statN: { fontFamily: font.display, fontSize: 24, color: colors.text },
   statLabel: { fontFamily: font.body, fontSize: 11.5, color: colors.faint },
   headline: { flexDirection: 'row', gap: 12, alignItems: 'flex-start', padding: 16 },
-  headlineText: { flex: 1, fontFamily: font.displayRegular, fontSize: 15.5, lineHeight: 24, color: colors.text },
+  headlineText: { flex: 1, fontFamily: font.display, fontSize: 17, lineHeight: 24, color: colors.text },
   section: { gap: 10 },
   barsCard: { padding: 16, gap: 13 },
   barRow: { flexDirection: 'row', alignItems: 'center', gap: 11 },
   barLabel: { width: 104, fontFamily: font.medium, fontSize: 11.5 },
-  track: { flex: 1, height: 6, borderRadius: 3, backgroundColor: colors.surfaceRaised, overflow: 'hidden' },
-  fill: { height: 6, borderRadius: 3 },
+  track: { flex: 1, height: 8, borderRadius: 4, backgroundColor: colors.wash, overflow: 'hidden' },
+  fill: { height: 8, borderRadius: 4 },
   barN: { width: 18, textAlign: 'right', fontFamily: font.body, fontSize: 11.5, color: colors.faint },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   pill: {
@@ -234,4 +242,7 @@ const styles = StyleSheet.create({
   emotionDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
   emotionLabel: { flex: 1, fontFamily: font.medium, fontSize: 14, color: colors.text },
   emotionN: { fontFamily: font.body, fontSize: 12, color: colors.faint },
+  reflect: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderColor: 'rgba(185, 162, 255, 0.35)' },
+  reflectIcon: { width: 44, height: 44, borderRadius: 15, backgroundColor: colors.glowSoft, alignItems: 'center', justifyContent: 'center' },
+  reflectTitle: { fontFamily: font.semi, fontSize: 16, color: colors.text },
 });

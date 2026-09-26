@@ -6,19 +6,23 @@ import { colors, gutter } from '@/theme';
 const SECTIONS = [
   {
     title: 'Personal use',
-    body: 'VOQDO is a personal journaling app. You are responsible for the content you create and for keeping your device secure.',
+    body: 'VOQDO is a personal journaling app. You are responsible for the content you create and for keeping your device and email account secure.',
   },
   {
-    title: 'Local storage',
-    body: 'Entries live on your device. Uninstalling the app, clearing storage, or using Erase journal can permanently remove your data. Keep exports if you need a backup.',
+    title: 'Free trial',
+    body: 'New accounts get a 3-day free trial with every feature. When it ends, a VOQDO Pro subscription is needed to keep writing, syncing and using AI. You can always read, export and delete what you wrote.',
   },
   {
-    title: 'Optional AI',
-    body: 'AI features are optional and may be unavailable without a configured backend. Suggestions are imperfect — review titles, tags, and moods before saving.',
+    title: 'VOQDO Pro',
+    body: 'Pro is a monthly subscription billed by Dodo Payments at the price shown in the app. It renews automatically until cancelled. Cancel any time from billing settings; access continues until the end of the period you paid for.',
   },
   {
-    title: 'Pro & purchases',
-    body: 'VOQDO Pro is a monthly subscription billed by Dodo Payments at the price shown in the app. Completing checkout unlocks Pro on this device. Habit XP, journeys, and local journaling remain free. Manage or cancel the subscription through Dodo’s customer tools.',
+    title: 'Backup & sync',
+    body: 'We back up your journal while your trial or subscription is active and work hard to keep it safe, but please keep exports of anything irreplaceable. Deleting your account permanently removes your backup.',
+  },
+  {
+    title: 'AI features',
+    body: 'AI suggestions are imperfect — review titles, tags and moods before saving. Fair-use limits keep the service fast and affordable for everyone.',
   },
   {
     title: 'Health note',
@@ -35,7 +39,7 @@ export default function Terms() {
       <View style={styles.head}>
         <Kicker color={colors.accent}>TERMS</Kicker>
         <Display size={28}>How VOQDO works</Display>
-        <Body>Simple terms for a local-first journal. Version 1.0.0.</Body>
+        <Body>Simple terms for a nightly journal. Version 1.0.0.</Body>
       </View>
       {SECTIONS.map((section) => (
         <Card key={section.title} style={styles.card}>

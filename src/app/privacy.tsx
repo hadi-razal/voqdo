@@ -5,28 +5,32 @@ import { colors, gutter } from '@/theme';
 
 const SECTIONS = [
   {
-    title: 'What stays on your device',
-    body: 'Your journal entries, drafts, reflections, name, and preferences are stored locally with AsyncStorage. Nothing is uploaded unless you choose an optional AI action.',
+    title: 'Your journal, on your device first',
+    body: 'Entries, drafts and reflections are saved on this device first, so VOQDO works offline. While you have an active trial or subscription, they are also backed up to our database (hosted by Supabase) so they survive a lost phone and sync to your other devices.',
   },
   {
-    title: 'Optional AI suggestions',
-    body: 'When you tap Generate AI suggestions or use the Reflection room, only the text you selected is sent to the configured analysis service. Provider data-collection routing is set to deny. AI output is saved only if you keep it when you save.',
+    title: 'Your account',
+    body: 'VOQDO creates a private guest account when you finish onboarding, so your trial, backup and subscription belong to you. Add an email any time to sign in on another device. We only use your email for sign-in codes and billing receipts.',
+  },
+  {
+    title: 'Who can read your entries',
+    body: 'Only you. Every row in the database is locked to your account with row-level security, and entries are encrypted in transit and at rest. We never sell your writing, use it for advertising, or train AI models on it.',
+  },
+  {
+    title: 'Optional AI',
+    body: 'AI suggestions and reflections send only the text you choose, when you tap, to our server and then to OpenRouter and its model provider, with provider data collection set to deny. Nothing from AI requests is stored except a count used for fair-use limits.',
   },
   {
     title: 'Microphone & speech',
-    body: 'Voice journaling uses the microphone and on-device speech recognition when available. Audio may be kept as a local file reference for that entry; it is never uploaded by VOQDO.',
+    body: 'Voice journaling uses on-device speech recognition when available. Recordings stay on this device and are never uploaded; only the transcribed text is saved as your entry.',
   },
   {
-    title: 'Export & erase',
-    body: 'Export shares Markdown through your system share sheet only after you pick a destination. Erase journal permanently deletes local entries, reflections, and settings on this device.',
+    title: 'Payments',
+    body: 'VOQDO Pro is billed by Dodo Payments on their hosted checkout. We receive your subscription status, never your card details, and your journal is never sent to Dodo.',
   },
   {
-    title: 'No account required',
-    body: 'VOQDO does not create an account, track analytics, or sell your writing. Your journal stays on this device.',
-  },
-  {
-    title: 'Pro payments',
-    body: 'VOQDO Pro is billed through Dodo Payments. Checkout runs on Dodo’s hosted page. Email for a receipt is optional and only used for billing. Payment confirmation unlocks Pro on this device; your journal text is never sent to Dodo.',
+    title: 'Export, erase & delete',
+    body: 'Export your journal as Markdown at any time, even after a trial ends. Erase journal deletes your entries here and in the backup. Delete account (Profile → Account & backup) permanently removes your account and all of its data.',
   },
 ];
 
@@ -39,7 +43,7 @@ export default function Privacy() {
       <View style={styles.head}>
         <Kicker color={colors.accent}>PRIVACY</Kicker>
         <Display size={28}>Your words stay yours</Display>
-        <Body>A clear look at how VOQDO handles your journal on this device.</Body>
+        <Body>A clear look at how VOQDO handles your journal.</Body>
       </View>
       {SECTIONS.map((section) => (
         <Card key={section.title} style={styles.card}>

@@ -1,14 +1,15 @@
 import { MONTHLY_PRICE_LABEL } from '@/lib/pricing';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { Pressable, Share, StyleSheet, Text, TextInput, View } from 'react-native';
-import { BrandMark } from '@/components/BrandMark';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { MascotTalk } from '@/components/Mascot';
 import { Body, Card, IconTile, Kicker, Screen, TopBar } from '@/components/vq';
+import { useAccount } from '@/context/account';
 import { useJournal } from '@/context/journal';
 import { useToast } from '@/context/toast';
 import { Icon, type IconName } from '@/icons';
 import { confirmDestructive } from '@/lib/confirm';
+import { exportJournal } from '@/lib/exportJournal';
 import {
   CATEGORY_KEYS,
   catStyle,
@@ -33,6 +34,7 @@ export default function Profile() {
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/'));
   const { entries, streak, settings, updateSettings, resetAll } = useJournal();
   const { toast } = useToast();
+  const { cloud, user, access } = useAccount();
   const [name, setName] = useState(settings.name);
 
   const saveName = () => {
@@ -44,21 +46,9 @@ export default function Profile() {
     }
   };
 
-  const exportJournal = async () => {
-    if (!entries.length) {
-      toast('Write your first entry before exporting');
-      return;
-    }
+  const shareJournal = async () => {
     try {
-      await Share.share({
-        title: 'VOQDO journal',
-        message: entries
-          .map(
-            (entry) =>
-              `# ${entry.title}\n\n${new Date(entry.createdAt).toLocaleString()} · ${entry.mood}\n\n${entry.body}\n\nTags: ${entry.categories.join(', ')}`
-          )
-          .join('\n\n---\n\n'),
-      });
+      if ((await exportJournal(entries)) === 'empty') toast('Write your first entry before exporting');
     } catch {
       toast('Could not open sharing. Please try again.');
     }
@@ -72,7 +62,7 @@ export default function Profile() {
   const confirmReset = () =>
     confirmDestructive({
       title: 'Erase your journal?',
-      message: 'Every entry and setting will be deleted for good.',
+      message: 'Every entry, reflection and setting will be deleted from this device and from your cloud backup.',
       confirmLabel: 'Erase',
       onConfirm: () => {
         resetAll();
@@ -119,13 +109,26 @@ export default function Profile() {
       rows: [
         {
           label: 'VOQDO Pro',
-          value: settings.pro
-            ? `Active · ${MONTHLY_PRICE_LABEL}/month`
-            : `${MONTHLY_PRICE_LABEL}/month · Dodo`,
+          value: access.pro
+            ? 'Active'
+            : access.trialActive
+              ? `Trial · ${access.daysLeft}d left`
+              : `${MONTHLY_PRICE_LABEL}/month`,
           icon: 'star',
           cat: 'Gratitude',
           onPress: () => router.push('/pro'),
         },
+        ...(cloud
+          ? [
+              {
+                label: 'Account & backup',
+                value: user?.email ?? 'Guest',
+                icon: 'cloud' as const,
+                cat: 'Reflection',
+                onPress: () => router.push('/account'),
+              },
+            ]
+          : []),
       ],
     },
     {
@@ -136,11 +139,11 @@ export default function Profile() {
           value: 'Markdown',
           icon: 'export',
           cat: 'Reflection',
-          onPress: exportJournal,
+          onPress: shareJournal,
         },
         {
           label: 'Privacy',
-          value: 'Local + optional AI',
+          value: 'Private + backed up',
           icon: 'lock',
           cat: 'Reflection',
           onPress: () => router.push('/privacy'),
@@ -170,7 +173,22 @@ export default function Profile() {
       <TopBar onBack={goBack} />
 
       <View style={styles.identity}>
-        <BrandMark size={88} glow />
+        <MascotTalk
+          pose="wave"
+          size={120}
+          bare
+          layout="stack"
+          line={
+            settings.name.trim() && settings.name.trim() !== 'You'
+              ? `Hey ${settings.name.trim()}. This is your space.`
+              : 'This space stays on this device.'
+          }
+          taps={[
+            streak > 0 ? `${streak}-day streak. Quietly proud.` : 'A first page starts the garden.',
+            'Export anytime. Erase anytime.',
+            'Tap me. I like saying hi.',
+          ]}
+        />
         <TextInput
           accessibilityLabel="Your name"
           value={name}
@@ -188,21 +206,6 @@ export default function Profile() {
             ? `Journalling since your first entry · ${words.toLocaleString()} words`
             : 'Your journal begins when you write the first page.'}
         </Body>
-        <MascotTalk
-          pose="wave"
-          size={72}
-          layout="stack"
-          line={
-            settings.name.trim() && settings.name.trim() !== 'You'
-              ? `Hey ${settings.name.trim()}. This is your space.`
-              : 'This space stays on this device.'
-          }
-          taps={[
-            streak > 0 ? `${streak}-day streak. Quietly proud.` : 'A first page starts the garden.',
-            'Export anytime. Erase anytime.',
-            'Tap me. I like saying hi.',
-          ]}
-        />
       </View>
 
       <View style={styles.stats}>
@@ -277,13 +280,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     minWidth: 140,
     padding: 8,
-    borderBottomWidth: 1,
+    borderBottomWidth: 1.5,
     borderBottomColor: colors.border,
   },
   stats: { flexDirection: 'row', gap: 9, paddingHorizontal: gutter, marginBottom: 22 },
   stat: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.borderSoft,
     borderRadius: radius.lg,

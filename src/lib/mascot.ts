@@ -78,6 +78,8 @@ export type CompanionInput = {
   weeklyComplete: boolean;
   empty: boolean;
   name?: string;
+  /** Whole days since the last saved page. */
+  daysAway?: number | null;
 };
 
 export type CompanionMoment = {
@@ -94,6 +96,7 @@ export function companionMoment({
   weeklyComplete,
   empty,
   name,
+  daysAway,
 }: CompanionInput): CompanionMoment {
   const who = name?.trim() && name.trim() !== 'You' ? name.trim() : 'you';
 
@@ -102,6 +105,14 @@ export function companionMoment({
       pose: 'peek',
       line: 'I’ll keep a page open.',
       taps: ['No rush. I’m here.', 'A few honest lines is plenty.', 'Tap the plus when you’re ready.'],
+    };
+  }
+
+  if (!wroteToday && daysAway != null && daysAway >= 2) {
+    return {
+      pose: daysAway >= 4 ? 'sleep' : 'nap',
+      line: who === 'you' ? 'Oh — you’re back! I missed you.' : `Oh — ${who}! I missed you.`,
+      taps: ['I kept your pages safe.', 'One line wakes me right up.', 'No catching up needed. Just today.'],
     };
   }
 

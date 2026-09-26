@@ -76,3 +76,11 @@ test('record companion listens, then thinks', () => {
   assert.equal(companionForRecord({ processing: true }).pose, 'think');
   assert.equal(companionForRecord({ error: true }).pose, 'rest');
 });
+
+test('returning after days away gets a sleepy welcome back, not guilt', () => {
+  const away = companionMoment({ hour: 14, wroteToday: false, streak: 0, weeklyComplete: false, empty: false, daysAway: 3 });
+  assert.equal(away.pose, 'nap');
+  assert.match(away.line, /missed you/);
+  assert.equal(companionMoment({ hour: 14, wroteToday: false, streak: 0, weeklyComplete: false, empty: false, daysAway: 9 }).pose, 'sleep');
+  assert.equal(companionMoment({ hour: 14, wroteToday: true, streak: 1, weeklyComplete: false, empty: false, daysAway: 0 }).pose, 'heart');
+});

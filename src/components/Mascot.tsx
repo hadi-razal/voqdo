@@ -1,60 +1,78 @@
 import { useMemo, useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, View, type ImageStyle } from 'react-native';
-import { useHabitProgress } from '@/lib/useHabitProgress';
-import {
-  companionMoment,
-  MASCOT_LABELS,
-  type MascotPose,
-} from '@/lib/mascot';
-import { colors, font, pressedOpacity, radius } from '@/theme';
+import { Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import { Sprout, type SproutFace, type SproutLook } from '@/components/Sprout';
+import { dayKey, useJournal } from '@/context/journal';
+import { MASCOT_LABELS, type MascotPose } from '@/lib/mascot';
+import { stageFor, type SproutStage } from '@/lib/pet';
+import { colors, font, pressedOpacity, radius, shadow, type Mood } from '@/theme';
 
-const IMAGES: Record<MascotPose, number> = {
-  journal: require('../../assets/images/mascot/journal.png'),
-  heart: require('../../assets/images/mascot/heart.png'),
-  cheer: require('../../assets/images/mascot/cheer.png'),
-  nap: require('../../assets/images/mascot/nap.png'),
-  wonder: require('../../assets/images/mascot/wonder.png'),
-  think: require('../../assets/images/mascot/think.png'),
-  listen: require('../../assets/images/mascot/listen.png'),
-  laptop: require('../../assets/images/mascot/laptop.png'),
-  cocoa: require('../../assets/images/mascot/cocoa.png'),
-  hello: require('../../assets/images/mascot/hello.png'),
-  weep: require('../../assets/images/mascot/weep.png'),
-  sleep: require('../../assets/images/mascot/sleep.png'),
-  wink: require('../../assets/images/mascot/wink.png'),
-  shy: require('../../assets/images/mascot/shy.png'),
-  study: require('../../assets/images/mascot/study.png'),
-  grow: require('../../assets/images/mascot/grow.png'),
-  storm: require('../../assets/images/mascot/storm.png'),
-  party: require('../../assets/images/mascot/party.png'),
-  rest: require('../../assets/images/mascot/rest.png'),
-  peek: require('../../assets/images/mascot/peek.png'),
-  star: require('../../assets/images/mascot/star.png'),
-  ponder: require('../../assets/images/mascot/ponder.png'),
-  bloom: require('../../assets/images/mascot/bloom.png'),
-  wave: require('../../assets/images/mascot/wave.png'),
+/** Each named pose is a combination of face, arms and prop. */
+export const POSE_LOOKS: Record<MascotPose, SproutLook> = {
+  journal: { face: 'happy', arms: 'hold', prop: 'book' },
+  heart: { face: 'love', arms: 'hug', prop: 'hearts' },
+  cheer: { face: 'joy', arms: 'cheer', prop: 'sparkles' },
+  nap: { face: 'sleepy', prop: 'zzz' },
+  wonder: { face: 'surprised', prop: 'sparkles' },
+  think: { face: 'thinking', prop: 'question' },
+  listen: { face: 'calm', prop: 'waves' },
+  laptop: { face: 'thinking', arms: 'hold', prop: 'book' },
+  cocoa: { face: 'calm', arms: 'hold', prop: 'cup' },
+  hello: { face: 'happy', arms: 'wave' },
+  weep: { face: 'sad', prop: 'tear' },
+  sleep: { face: 'sleepy', prop: 'zzz' },
+  wink: { face: 'wink', arms: 'wave', prop: 'sparkles' },
+  shy: { face: 'shy', arms: 'hug' },
+  study: { face: 'thinking', arms: 'hold', prop: 'book' },
+  grow: { face: 'joy', arms: 'cheer' },
+  storm: { face: 'worried', prop: 'rain' },
+  party: { face: 'joy', arms: 'cheer', prop: 'party' },
+  rest: { face: 'sleepy' },
+  peek: { face: 'shy', arms: 'wave' },
+  star: { face: 'joy', arms: 'cheer', prop: 'star' },
+  ponder: { face: 'thinking' },
+  bloom: { face: 'happy', arms: 'hug', prop: 'sparkles' },
+  wave: { face: 'joy', arms: 'wave' },
 };
+
+/** Sprout's face for each mood — used by mood pickers and entry cards. */
+export const MOOD_FACES: Record<Mood, SproutFace> = {
+  Bright: 'joy',
+  Calm: 'calm',
+  Tender: 'shy',
+  Restless: 'worried',
+  Heavy: 'sad',
+};
+
+/** Sprout's current growth stage, from distinct saved journaling days. */
+export function useSproutStage(): SproutStage {
+  const { entries } = useJournal();
+  return useMemo(() => stageFor(new Set(entries.map((entry) => dayKey(entry.createdAt))).size), [entries]);
+}
 
 export function Mascot({
   pose,
   size = 88,
+  stage,
+  bounce,
+  animated,
   style,
 }: {
   pose: MascotPose;
   size?: number;
-  style?: ImageStyle;
+  stage?: SproutStage;
+  bounce?: number;
+  animated?: boolean;
+  style?: ViewStyle;
 }) {
+  const current = useSproutStage();
   return (
-    <Image
-      source={IMAGES[pose]}
-      accessibilityLabel={MASCOT_LABELS[pose]}
-      style={[{ width: size, height: size, flexShrink: 0 }, style]}
-      resizeMode="contain"
-    />
+    <View accessible accessibilityRole="image" accessibilityLabel={`Sprout, ${MASCOT_LABELS[pose].toLowerCase()}`} style={style}>
+      <Sprout look={POSE_LOOKS[pose]} stage={stage ?? current} size={size} bounce={bounce} animated={animated} />
+    </View>
   );
 }
 
-/** Tappable buddy: pose + speech bubble that cycles a few lines. */
+/** Tappable buddy: Sprout plus a speech bubble that cycles a few lines. */
 export function MascotTalk({
   pose,
   line,
@@ -74,52 +92,28 @@ export function MascotTalk({
   const lines = [line, ...taps];
   const shown = lines[tick % lines.length];
   const playful = tick > 0 && tick % lines.length === 0;
+  const stack = layout === 'stack';
 
   return (
     <Pressable
       onPress={() => setTick((n) => n + 1)}
       accessibilityRole="button"
-      accessibilityLabel={`${MASCOT_LABELS[pose]}. ${shown}. Double tap to hear another line.`}
+      accessibilityLabel={`Sprout says: ${shown}. Double tap to hear another line.`}
       style={({ pressed }) => [
         styles.talk,
-        layout === 'stack' && styles.talkStack,
+        stack && styles.talkStack,
         bare && styles.talkBare,
         pressed && { opacity: pressedOpacity },
       ]}
     >
-      <Mascot pose={playful ? 'wink' : pose} size={size} />
-      <View style={[styles.bubble, layout === 'stack' && styles.bubbleStack]}>
-        <Text style={[styles.bubbleText, layout === 'stack' && styles.centered]}>{shown}</Text>
-        <Text style={[styles.hint, layout === 'stack' && styles.centered]}>Tap me</Text>
+      <Mascot pose={playful ? 'wink' : pose} size={size} bounce={tick} />
+      <View style={[styles.bubble, stack ? styles.bubbleStack : styles.bubbleRow]}>
+        {!stack && <View style={styles.tail} />}
+        <Text style={[styles.bubbleText, stack && styles.centered]}>{shown}</Text>
+        <Text style={[styles.hint, stack && styles.centered]}>Tap Sprout</Text>
       </View>
     </Pressable>
   );
-}
-
-/** Home companion that reacts to time of day, streaks, and today’s page. */
-export function MascotBuddy({
-  wroteToday,
-  empty,
-  name,
-}: {
-  wroteToday: boolean;
-  empty: boolean;
-  name?: string;
-}) {
-  const progress = useHabitProgress();
-  const moment = useMemo(
-    () =>
-      companionMoment({
-        wroteToday,
-        empty,
-        name,
-        streak: progress.streak,
-        weeklyComplete: progress.weeklyComplete,
-      }),
-    [wroteToday, empty, name, progress.streak, progress.weeklyComplete]
-  );
-
-  return <MascotTalk pose={moment.pose} line={moment.line} taps={moment.taps} />;
 }
 
 const styles = StyleSheet.create({
@@ -127,34 +121,42 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    borderRadius: radius.xl,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
     alignSelf: 'stretch',
   },
-  talkStack: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 8,
+  talkStack: { flexDirection: 'column', alignItems: 'center', gap: 10 },
+  talkBare: {},
+  bubble: {
+    gap: 4,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    borderRadius: radius.lg,
+    ...shadow.card,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
   },
-  talkBare: {
-    backgroundColor: 'transparent',
-    borderWidth: 0,
-    paddingVertical: 0,
-    paddingHorizontal: 0,
+  bubbleRow: { flex: 1 },
+  // No flex here: `flex: 0` collapses to zero height on web.
+  bubbleStack: { alignItems: 'center', maxWidth: 300 },
+  tail: {
+    position: 'absolute',
+    left: -6,
+    top: '50%',
+    marginTop: -6,
+    width: 12,
+    height: 12,
+    backgroundColor: colors.surface,
+    borderLeftWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: colors.cardBorder,
+    transform: [{ rotate: '45deg' }],
   },
-  bubble: { flex: 1, gap: 4 },
-  bubbleStack: { flex: 0, alignItems: 'center' },
   bubbleText: {
-    fontFamily: font.displayItalic,
-    fontStyle: 'italic',
+    fontFamily: font.medium,
     fontSize: 15,
-    lineHeight: 22,
+    lineHeight: 21,
     color: colors.text,
   },
-  hint: { fontFamily: font.medium, fontSize: 11, color: colors.faint },
+  hint: { fontFamily: font.body, fontSize: 11, color: colors.faint },
   centered: { textAlign: 'center' },
 });
