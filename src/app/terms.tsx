@@ -18,7 +18,7 @@ const SECTIONS = [
   },
   {
     title: 'Pro & purchases',
-    body: 'Pro benefits shown in the app are a preview. No subscription or in-app purchase is charged in this version. Restore Purchases has no effect until billing ships.',
+    body: 'VOQDO Pro is a monthly subscription billed by Dodo Payments at the price shown in the app. Completing checkout unlocks Pro on this device. Habit XP, journeys, and local journaling remain free. Manage or cancel the subscription through Dodo’s customer tools.',
   },
   {
     title: 'Health note',

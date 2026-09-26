@@ -57,7 +57,7 @@ For a physical device or distributed app, deploy an authenticated HTTPS backend 
 
 Home and Profile open **Your daily ritual**: daily check-ins, 20 XP for each distinct saved journal day, a new level every 100 XP, six milestone badges, and a configurable weekly goal of 3, 5, or 7 days. A completed first check-in shows a reward message after storage succeeds. Extra entries and edits do not award more XP. Missed days do not deduct XP; progress is derived from saved entry dates, so deleting the last entry for a day removes that day's contribution. Existing journals count automatically.
 
-The planned Pro subscription is **USD $4.99/month**, defined in `src/lib/pricing.ts`. App Store billing, scheduled reminders, and Pro features remain unimplemented previews. Habit features are available without Pro.
+**VOQDO Pro** is **USD $4.99/month**, defined in `src/lib/pricing.ts`, billed via **Dodo Payments**. The local server creates a Checkout Session (`POST /checkout`); the app opens Dodo’s hosted page and unlocks Pro on this device after `POST /checkout/confirm` verifies the payment or subscription. Habit features stay free. Set `DODO_PAYMENTS_API_KEY`, `DODO_PAYMENTS_MODE`, and `DODO_PRODUCT_ID` in `.env.local` (see `.env.example`).
 
 ## Guided journeys and reflection room
 

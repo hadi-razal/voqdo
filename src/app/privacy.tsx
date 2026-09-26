@@ -22,7 +22,11 @@ const SECTIONS = [
   },
   {
     title: 'No account required',
-    body: 'VOQDO does not create an account, track analytics, or sell your writing. Cloud backup and Pro purchases are not available in this version.',
+    body: 'VOQDO does not create an account, track analytics, or sell your writing. Your journal stays on this device.',
+  },
+  {
+    title: 'Pro payments',
+    body: 'VOQDO Pro is billed through Dodo Payments. Checkout runs on Dodo’s hosted page. Email for a receipt is optional and only used for billing. Payment confirmation unlocks Pro on this device; your journal text is never sent to Dodo.',
   },
 ];
 

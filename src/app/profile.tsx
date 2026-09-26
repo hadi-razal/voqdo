@@ -119,7 +119,9 @@ export default function Profile() {
       rows: [
         {
           label: 'VOQDO Pro',
-          value: `${MONTHLY_PRICE_LABEL}/month · preview`,
+          value: settings.pro
+            ? `Active · ${MONTHLY_PRICE_LABEL}/month`
+            : `${MONTHLY_PRICE_LABEL}/month · Dodo`,
           icon: 'star',
           cat: 'Gratitude',
           onPress: () => router.push('/pro'),
