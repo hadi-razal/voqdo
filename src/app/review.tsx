@@ -8,18 +8,18 @@ import {
   Kicker,
   PrimaryButton,
   Screen,
+  SecondaryButton,
   TextButton,
   TopBar,
 } from '@/components/vq';
 import { useJournal } from '@/context/journal';
 import { useToast } from '@/context/toast';
 import { Icon, SparkIcon } from '@/icons';
-import { MascotTalk } from '@/components/Mascot';
+import { MascotTalk, MOOD_FACES, useSproutStage } from '@/components/Mascot';
+import { SproutArt } from '@/components/Sprout';
 import { companionForMood } from '@/lib/mascot';
 import { confirmDestructive } from '@/lib/confirm';
 import { formatDuration } from '@/lib/analyze';
-import { challengeProgress } from '@/lib/challenges';
-import { rewardMessage } from '@/lib/habits';
 import { requestAiAnalysis } from '@/lib/remoteAnalysis';
 import {
   CATEGORY_KEYS,
@@ -28,10 +28,12 @@ import {
   font,
   gutter,
   moodStyle,
+  MOODS,
   pressedOpacity,
   radius,
   type CategoryKey,
 } from '@/theme';
+
 
 /**
  * What VOQDO understood, shown before anything is saved. The prose is fixed;
@@ -39,8 +41,9 @@ import {
  */
 export default function Review() {
   const router = useRouter();
-  const { draft, setDraft, saveDraft, setWriting, entries } = useJournal();
+  const { draft, setDraft, saveDraft, setWriting } = useJournal();
   const { toast } = useToast();
+  const stage = useSproutStage();
 
   // Saving and discarding both clear the draft, and this screen is still
   // mounted when they do — without this flag the guard below would race the
@@ -104,9 +107,13 @@ export default function Review() {
       toast('Could not save. Your draft is still here; please try again.');
       return;
     }
-    router.replace(`/entry/${saved.id}`);
-    const journey = saved.challengeId ? challengeProgress([saved, ...entries], saved.challengeId, Date.now()) : null;
-    toast(draft.editingId ? 'Entry updated' : journey?.done ? 'Journey complete · badge earned!' : rewardMessage(entries, [saved, ...entries]) ?? 'Entry saved');
+    if (draft.editingId) {
+      router.replace(`/entry/${saved.id}`);
+      toast('Entry updated');
+      return;
+    }
+    // New pages get the full reward moment; it derives everything from storage.
+    router.replace({ pathname: '/celebrate', params: { id: saved.id } });
   };
 
   const discard = () => confirmDestructive({
@@ -140,7 +147,7 @@ export default function Review() {
       <TextInput editable={!isSaving && !isAnalyzing} accessibilityLabel="Entry text" multiline textAlignVertical="top" value={draft.body} onChangeText={(body) => setDraft({ ...draft, body, analysisModel: undefined })} style={styles.bodyInput} />
 
       <View style={[styles.section, { marginTop: 18 }]}>
-        <PrimaryButton label={isAnalyzing ? 'Thinking…' : 'Generate AI suggestions'} disabled={isSaving || isAnalyzing || !draft.body.trim() || draft.body.length > 6000} onPress={askAi} />
+        <SecondaryButton icon="sparkle" label={isAnalyzing ? 'Thinking…' : 'Suggest title & tags with AI'} disabled={isSaving || isAnalyzing || !draft.body.trim() || draft.body.length > 6000} onPress={askAi} />
         <Body>Uses a small AI model for your title, mood, tags, and reflection. Only this entry’s text is sent to OpenRouter and its model provider when you tap.</Body>
         {draft.body.length > 6000 && <Body>AI supports up to 6,000 characters. You can still save your full entry with local suggestions.</Body>}
         {!!aiError && <Body style={{ color: colors.warn }}>{aiError}</Body>}
@@ -192,12 +199,17 @@ export default function Review() {
         />
         <Kicker>HOW DID IT FEEL?</Kicker>
         <Body>Tap a mood — Sprout will sit with it. Tap Sprout for another line.</Body>
-        <View style={styles.chips}>
-          {(['Calm', 'Bright', 'Heavy', 'Restless', 'Tender'] as const).map((value) => (
-            <Pressable disabled={isAnalyzing || isSaving} key={value} accessibilityRole="button" accessibilityState={{ selected: draft.mood === value }} onPress={() => setDraft({ ...draft, mood: value })} style={[styles.chip, { borderColor: draft.mood === value ? moodStyle(value).color : colors.border, backgroundColor: draft.mood === value ? moodStyle(value).bg : 'transparent' }]}>
-              <Text style={[styles.chipText, { color: moodStyle(value).color }]}>{value}</Text>
-            </Pressable>
-          ))}
+        <View style={styles.moods}>
+          {MOODS.map((value) => {
+            const on = draft.mood === value;
+            const tint = moodStyle(value);
+            return (
+              <Pressable disabled={isAnalyzing || isSaving} key={value} accessibilityRole="button" accessibilityLabel={value} accessibilityState={{ selected: on }} onPress={() => setDraft({ ...draft, mood: value })} style={[styles.moodTile, { backgroundColor: on ? tint.bg : colors.wash, borderColor: on ? tint.color : 'transparent' }]}>
+                <SproutArt look={{ face: MOOD_FACES[value] }} stage={stage} size={40} />
+                <Text style={[styles.moodLabel, { color: on ? tint.color : colors.muted }]}>{value}</Text>
+              </Pressable>
+            );
+          })}
         </View>
       </View>
       <Card style={styles.rows}>
@@ -230,7 +242,7 @@ export default function Review() {
 
 const styles = StyleSheet.create({
   titleInput: { fontFamily: font.display, fontSize: 22, color: colors.text, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border },
-  bodyInput: { marginHorizontal: gutter, marginTop: 16, padding: 14, minHeight: 150, borderRadius: 14, backgroundColor: colors.surface, fontFamily: font.body, fontSize: 16, lineHeight: 26, color: colors.text },
+  bodyInput: { marginHorizontal: gutter, marginTop: 16, padding: 16, minHeight: 160, borderRadius: radius.xl, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.borderSoft, fontFamily: font.displayRegular, fontSize: 16.5, lineHeight: 27, color: colors.text },
   content: { paddingBottom: 32 },
   head: { paddingHorizontal: gutter, gap: 8, marginTop: 6 },
   stamp: { fontFamily: font.body, fontSize: 12.5, color: colors.muted },
@@ -246,6 +258,9 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
   chip: { paddingVertical: 7, paddingHorizontal: 13, borderRadius: radius.pill, borderWidth: 1 },
   chipText: { fontFamily: font.medium, fontSize: 12.5 },
+  moods: { flexDirection: 'row', gap: 6, marginTop: 4 },
+  moodTile: { flex: 1, alignItems: 'center', gap: 3, paddingTop: 6, paddingBottom: 8, borderRadius: radius.lg, borderWidth: 1.5 },
+  moodLabel: { fontFamily: font.medium, fontSize: 11 },
   rows: { marginHorizontal: gutter, marginTop: 18 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 13, paddingVertical: 15, paddingHorizontal: 16 },
   rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },

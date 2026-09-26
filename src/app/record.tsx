@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Body, Display, NoteCard, PrimaryButton, TextButton, TopBar } from '@/components/vq';
 import { useJournal } from '@/context/journal';
 import { Mascot } from '@/components/Mascot';
+import { Sky } from '@/components/Sky';
 import { companionForRecord, type MascotPose } from '@/lib/mascot';
 import { formatDuration } from '@/lib/analyze';
 import { useVoiceCapture } from '@/lib/useVoiceCapture';
@@ -59,6 +60,7 @@ export default function Record() {
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 18 }]}>
+      <Sky />
       <TopBar onBack={dismiss} />
 
       <View style={styles.head}>
@@ -76,7 +78,7 @@ export default function Record() {
         </Pressable>
 
         <Text style={styles.status}>
-          {error ? 'Couldn’t listen' : processing ? 'Just a moment…' : 'Listening...'}
+          {error ? 'Couldn’t listen' : processing ? 'Just a moment…' : 'Listening…'}
         </Text>
         <Text style={styles.companion}>{shown}</Text>
         <Text style={styles.tapHint}>Tap Sprout</Text>
@@ -110,7 +112,7 @@ export default function Record() {
                 accessibilityLabel="Stop recording"
                 style={({ pressed }) => [
                   styles.stop,
-                  glowShadow(colors.glow, 'md'),
+                  glowShadow(colors.accent, 'md'),
                   pressed && { opacity: 0.85 },
                 ]}
               >
@@ -189,9 +191,9 @@ function Orb({ active, processing, pose }: { active: boolean; processing: boolea
       )}
 
       <Animated.View
-        style={[styles.core, glowShadow(colors.glow, 'lg'), { transform: [{ scale }] }]}
+        style={[styles.core, { transform: [{ scale }] }]}
       >
-        <Mascot pose={pose} size={78} />
+        <Mascot pose={pose} size={136} />
       </Animated.View>
     </View>
   );
@@ -265,50 +267,44 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
   head: { alignItems: 'center', gap: 8, paddingHorizontal: gutter, marginTop: 4 },
   stage: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 18, paddingHorizontal: gutter },
-  orb: { width: 200, height: 200, alignItems: 'center', justifyContent: 'center' },
+  orb: { width: 240, height: 240, alignItems: 'center', justifyContent: 'center' },
   haloOuter: {
     position: 'absolute',
-    width: 190,
-    height: 190,
-    borderRadius: 95,
+    width: 236,
+    height: 236,
+    borderRadius: 118,
     borderWidth: 1,
-    borderColor: 'rgba(233,160,99,0.16)',
-    backgroundColor: 'rgba(233,160,99,0.03)',
+    borderColor: 'rgba(185,162,255,0.2)',
+    backgroundColor: 'rgba(185,162,255,0.04)',
   },
   haloMid: {
     position: 'absolute',
-    width: 148,
-    height: 148,
-    borderRadius: 74,
+    width: 184,
+    height: 184,
+    borderRadius: 92,
     borderWidth: 1,
-    borderColor: 'rgba(233,160,99,0.3)',
-    backgroundColor: 'rgba(233,160,99,0.05)',
+    borderColor: 'rgba(255,180,140,0.35)',
+    backgroundColor: 'rgba(255,180,140,0.07)',
   },
   spinner: {
     position: 'absolute',
-    width: 118,
-    height: 118,
-    borderRadius: 59,
-    borderWidth: 2,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    borderWidth: 2.5,
     borderColor: 'transparent',
-    borderTopColor: colors.glow,
+    borderTopColor: colors.accent,
   },
   core: {
-    width: 104,
-    height: 104,
-    borderRadius: 52,
-    overflow: 'hidden',
-    borderWidth: 1.6,
-    borderColor: colors.glow,
-    backgroundColor: '#191410',
+    width: 150,
+    height: 150,
     alignItems: 'center',
     justifyContent: 'center',
   },
   status: { fontFamily: font.body, fontSize: 15, color: colors.text },
   companion: {
-    fontFamily: font.displayItalic,
-    fontStyle: 'italic',
-    fontSize: 15,
+    fontFamily: font.medium,
+    fontSize: 16,
     lineHeight: 22,
     color: colors.text,
     textAlign: 'center',
@@ -317,7 +313,7 @@ const styles = StyleSheet.create({
   tapHint: { fontFamily: font.medium, fontSize: 11, color: colors.faint },
   error: { fontFamily: font.body, fontSize: 13.5, lineHeight: 20, color: colors.warn, textAlign: 'center' },
   wave: { flexDirection: 'row', alignItems: 'center', gap: 3, height: 48 },
-  waveBar: { width: 2.6, borderRadius: 1.3, backgroundColor: colors.glow },
+  waveBar: { width: 3, borderRadius: 1.5, backgroundColor: colors.accent },
   timer: { fontFamily: font.body, fontSize: 15, color: colors.muted },
   transcript: {
     fontFamily: font.body,
@@ -332,11 +328,11 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: colors.glow,
+    backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  stopSquare: { width: 17, height: 17, borderRadius: 4, backgroundColor: '#20160E' },
+  stopSquare: { width: 18, height: 18, borderRadius: 5, backgroundColor: colors.accentInk },
   stopLabel: {
     fontFamily: font.body,
     fontSize: 12.5,

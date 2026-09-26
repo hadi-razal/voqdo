@@ -12,8 +12,10 @@ import {
   type ReactNode,
 } from 'react';
 import { challengeProgress } from '@/lib/challenges';
+import { habitProgress } from '@/lib/habits';
 import { analyzeEntry, type Analysis } from '@/lib/analyze';
 import { DEFAULT_SETTINGS, parseEntries, parseSettings } from '@/lib/journalStorage';
+import { EMPTY_TOMBSTONES, mergeRemote, parseTombstones, pruneTombstones, type Tombstones } from '@/lib/syncMerge';
 import { CATEGORY_KEYS, type CategoryKey, type Mood } from '@/theme';
 
 export type EntrySource = 'voice' | 'text';
@@ -35,6 +37,16 @@ export type Entry = {
   challengeStep?: number;
   /** Local file URI of the recording, when one was kept. */
   audioUri?: string;
+  /** Last local change (ms); drives last-writer-wins sync. Absent means createdAt. */
+  updatedAt?: number;
+};
+
+/** Changes pulled from the cloud, applied by `applyRemote`. */
+export type RemoteChanges = {
+  entries: Entry[];
+  removedEntries: { id: string; at: number }[];
+  reflections: SavedReflection[];
+  removedReflections: { id: string; at: number }[];
 };
 
 /** An analysed entry that has not been saved yet. */
@@ -55,7 +67,6 @@ export type Settings = {
   micGranted: boolean;
   nightlyPrompt: boolean;
   reminderTime: string;
-  pro: boolean;
   name: string;
 };
 
@@ -93,12 +104,18 @@ type JournalContextValue = {
   deleteEntry: (id: string) => void;
   updateSettings: (patch: Partial<Settings>) => void;
   resetAll: () => void;
+  /** Local deletions waiting to be pushed to the cloud. */
+  tombstones: Tombstones;
+  applyRemote: (changes: RemoteChanges) => void;
+  /** Forget deletions the server has accepted. */
+  confirmTombstones: (pushedUpTo: number) => void;
 };
 
 const ENTRIES_KEY = 'voqdo.entries';
 const SETTINGS_KEY = 'voqdo.settings';
 const WRITING_KEY = 'voqdo.writing';
 const REFLECTIONS_KEY = 'voqdo.reflections';
+const TOMBSTONES_KEY = 'voqdo.tombstones';
 
 
 const JournalContext = createContext<JournalContextValue | null>(null);
@@ -118,6 +135,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [writing, setWriting] = useState('');
   const [draft, setDraft] = useState<Draft | null>(null);
+  const [tombstones, setTombstones] = useState<Tombstones>(EMPTY_TOMBSTONES);
 
   useEffect(() => {
     let cancelled = false;
@@ -125,11 +143,12 @@ export function JournalProvider({ children }: { children: ReactNode }) {
     (async () => {
       setLoadError(false);
       try {
-        const [storedEntries, storedSettings, storedWriting, storedReflections] = await AsyncStorage.multiGet([
+        const [storedEntries, storedSettings, storedWriting, storedReflections, storedTombstones] = await AsyncStorage.multiGet([
           ENTRIES_KEY,
           SETTINGS_KEY,
           WRITING_KEY,
           REFLECTIONS_KEY,
+          TOMBSTONES_KEY,
         ]);
         if (cancelled) return;
 
@@ -137,6 +156,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
         setWriting(storedWriting[1] ?? '');
         setEntries(parseEntries(storedEntries[1]));
         setSettings(parseSettings(storedSettings[1]));
+        setTombstones(parseTombstones(storedTombstones[1]));
         setReady(true);
       } catch {
         if (!cancelled) setLoadError(true);
@@ -170,6 +190,11 @@ export function JournalProvider({ children }: { children: ReactNode }) {
     AsyncStorage.setItem(REFLECTIONS_KEY, JSON.stringify(reflections)).catch(() => Alert.alert('Could not store reflections', 'Please try again.'));
   }, [reflections, ready]);
 
+  useEffect(() => {
+    if (!ready) return;
+    AsyncStorage.setItem(TOMBSTONES_KEY, JSON.stringify(tombstones)).catch(() => {});
+  }, [tombstones, ready]);
+
   const saveReflection = useCallback(async (reflection: SavedReflection) => {
     const next = [reflection, ...reflections.filter((item) => item.id !== reflection.id)];
     await AsyncStorage.setItem(REFLECTIONS_KEY, JSON.stringify(next));
@@ -181,16 +206,45 @@ export function JournalProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const deleteEntry = useCallback((id: string) => {
+    const at = Date.now();
+    const orphaned = reflections.filter((reflection) => reflection.sourceIds.includes(id)).map((reflection) => reflection.id);
     setEntries((current) => current.filter((entry) => entry.id !== id));
     setReflections((current) => current.filter((reflection) => !reflection.sourceIds.includes(id)));
-  }, []);
+    setTombstones((current) => ({
+      entries: { ...current.entries, [id]: at },
+      reflections: { ...current.reflections, ...Object.fromEntries(orphaned.map((item) => [item, at])) },
+    }));
+  }, [reflections]);
 
+  // Erasing the journal also erases the synced copy, via tombstones.
   const resetAll = useCallback(() => {
+    const at = Date.now();
+    setTombstones((current) => ({
+      entries: { ...current.entries, ...Object.fromEntries(entries.map((entry) => [entry.id, at])) },
+      reflections: { ...current.reflections, ...Object.fromEntries(reflections.map((item) => [item.id, at])) },
+    }));
     setEntries([]);
     setReflections([]);
     setWriting('');
     setSettings({ ...DEFAULT_SETTINGS, onboarded: true });
     setDraft(null);
+  }, [entries, reflections]);
+
+  const applyRemote = useCallback((changes: RemoteChanges) => {
+    // The recording file only exists on the device that made it.
+    setEntries((current) =>
+      mergeRemote(current, changes.entries, changes.removedEntries, tombstones.entries, (local, remote) => ({
+        ...remote,
+        audioUri: local.audioUri,
+      })).items
+    );
+    setReflections((current) =>
+      mergeRemote(current, changes.reflections, changes.removedReflections, tombstones.reflections).items
+    );
+  }, [tombstones]);
+
+  const confirmTombstones = useCallback((pushedUpTo: number) => {
+    setTombstones((current) => pruneTombstones(current, pushedUpTo));
   }, []);
 
   const composeDraft = useCallback<JournalContextValue['composeDraft']>((input) => {
@@ -222,6 +276,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
       challengeId: challengeValid ? draft.challengeId : undefined,
       challengeStep: challengeValid ? draft.challengeStep : undefined,
       audioUri: draft.audioUri,
+      updatedAt: Date.now(),
     };
 
     const nextEntries = original
@@ -239,6 +294,12 @@ export function JournalProvider({ children }: { children: ReactNode }) {
     return entry;
   }, [draft, entries]);
 
+  // Shared with Garden and Home so leaf shields protect the streak everywhere.
+  const streak = useMemo(() => {
+    void today;
+    return habitProgress(entries).streak;
+  }, [entries, today]);
+
   const week = useMemo(() => {
     // The day key invalidates calendar calculations when midnight passes.
     void today;
@@ -255,7 +316,7 @@ export function JournalProvider({ children }: { children: ReactNode }) {
       editEntry: (entry) => { saving.current = false; setDraft({ ...entry, editingId: entry.id }); },
       entries,
       settings,
-      streak: streakFrom(entries),
+      streak,
       week,
       entryById: (id) => entries.find((entry) => entry.id === id),
       entriesIn: (cat) => entries.filter((entry) => entry.categories.includes(cat)),
@@ -270,8 +331,11 @@ export function JournalProvider({ children }: { children: ReactNode }) {
       deleteEntry,
       updateSettings,
       resetAll,
+      tombstones,
+      applyRemote,
+      confirmTombstones,
     }),
-    [reflections, saveReflection, ready, loadError, entries, settings, week, writing, draft, composeDraft, saveDraft, deleteEntry, updateSettings, resetAll]
+    [reflections, saveReflection, ready, loadError, entries, settings, streak, week, writing, draft, composeDraft, saveDraft, deleteEntry, updateSettings, resetAll, tombstones, applyRemote, confirmTombstones]
   );
 
   return <JournalContext.Provider value={value}>{children}</JournalContext.Provider>;
@@ -296,28 +360,6 @@ function searchEntries(entries: Entry[], query: string): Entry[] {
       entry.categories.some((cat) => cat.toLowerCase().includes(q)) ||
       entry.emotions.some((emotion) => emotion.toLowerCase().includes(q))
   );
-}
-
-/** Consecutive days with an entry, counting back from today. */
-function streakFrom(entries: Entry[]): number {
-  if (entries.length === 0) return 0;
-
-  const days = new Set(entries.map((entry) => dayKey(entry.createdAt)));
-  const cursor = new Date();
-  let streak = 0;
-
-  // A journal written yesterday but not yet today still has a live streak.
-  if (!days.has(dayKey(cursor.getTime()))) {
-    cursor.setDate(cursor.getDate() - 1);
-    if (!days.has(dayKey(cursor.getTime()))) return 0;
-  }
-
-  while (days.has(dayKey(cursor.getTime()))) {
-    streak += 1;
-    cursor.setDate(cursor.getDate() - 1);
-  }
-
-  return streak;
 }
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];

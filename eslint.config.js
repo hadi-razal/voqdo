@@ -7,6 +7,7 @@ module.exports = defineConfig([
   {
     // `legacy/` is the archived task-app and Expo template, kept for reference
     // only — it is excluded from tsconfig too and never bundled.
-    ignores: ['dist/*', 'legacy/*', '.expo/*', 'node_modules/*'],
+    // `supabase/functions` runs on Deno (npm: imports, Deno globals).
+    ignores: ['dist/*', 'legacy/*', '.expo/*', 'node_modules/*', 'supabase/functions/*'],
   },
 ]);

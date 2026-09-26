@@ -57,7 +57,7 @@ test('invalid stored settings cannot crash the profile or bypass onboarding', ()
   const settings = parseSettings('{"name":42,"onboarded":"yes","pro":{},"reminderTime":false}');
   assert.equal(settings.name, 'You');
   assert.equal(settings.onboarded, false);
-  assert.equal(settings.pro, false);
+  assert.equal('pro' in settings, false, 'a stored Pro flag can no longer unlock anything');
   assert.equal(settings.reminderTime, '9:00 PM');
 });
 test('valid preferences survive migration and names are trimmed', () => {

@@ -1,4 +1,5 @@
 import { Linking, Platform } from 'react-native';
+import { cloudEnabled, invokeFunction } from '@/lib/supabase';
 
 const DEFAULT_BASE = __DEV__ ? 'http://127.0.0.1:8787' : '';
 
@@ -7,7 +8,7 @@ function apiBase() {
 }
 
 export function paymentsConfiguredHint() {
-  return Boolean(apiBase());
+  return cloudEnabled || Boolean(apiBase());
 }
 
 export function proReturnUrl() {
@@ -26,6 +27,18 @@ export async function startProCheckout({
   email?: string;
   signal?: AbortSignal;
 }): Promise<{ sessionId: string; checkoutUrl: string }> {
+  if (cloudEnabled) {
+    const data = await invokeFunction<{ sessionId?: unknown; checkoutUrl?: unknown }>(
+      'billing',
+      { action: 'checkout', name, email, returnUrl: proReturnUrl() },
+      signal
+    );
+    if (typeof data?.checkoutUrl !== 'string' || typeof data?.sessionId !== 'string') {
+      throw new Error('Checkout session was incomplete.');
+    }
+    return { sessionId: data.sessionId, checkoutUrl: data.checkoutUrl };
+  }
+
   const base = apiBase();
   if (!base) {
     throw new Error('Payments are not configured for this build. Start the local VOQDO server.');
@@ -85,6 +98,19 @@ export async function confirmProCheckout({
   status?: string;
   signal?: AbortSignal;
 }): Promise<ProConfirmResult> {
+  if (cloudEnabled) {
+    const data = await invokeFunction<Record<string, unknown>>(
+      'billing',
+      { action: 'confirm', subscriptionId, paymentId, status },
+      signal
+    );
+    return {
+      active: Boolean(data?.active),
+      reason: typeof data?.reason === 'string' ? data.reason : undefined,
+      status: typeof data?.status === 'string' ? data.status : undefined,
+    };
+  }
+
   const base = apiBase();
   if (!base) throw new Error('Payments are not configured for this build.');
 
@@ -106,6 +132,13 @@ export async function confirmProCheckout({
     customerId: typeof data.customerId === 'string' ? data.customerId : undefined,
     status: typeof data.status === 'string' ? data.status : undefined,
   };
+}
+
+/** A link to Dodo's customer portal, where Pro is cancelled or billing updated. */
+export async function openBillingPortal() {
+  const data = await invokeFunction<{ url?: unknown }>('billing', { action: 'portal' });
+  if (typeof data?.url !== 'string') throw new Error('Could not open billing settings.');
+  await openCheckoutUrl(data.url);
 }
 
 /** Read Dodo return query params from a web URL or deep-link. */

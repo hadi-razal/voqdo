@@ -9,7 +9,6 @@ export const DEFAULT_SETTINGS: Settings = {
   micGranted: false,
   nightlyPrompt: false,
   reminderTime: '9:00 PM',
-  pro: false,
   name: 'You',
 };
 
@@ -28,7 +27,8 @@ export function parseSettings(raw: string | null): Settings {
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return { ...DEFAULT_SETTINGS };
   const value = parsed as Record<string, unknown>;
   const next = { ...DEFAULT_SETTINGS };
-  for (const key of ['onboarded', 'micGranted', 'nightlyPrompt', 'pro'] as const) {
+  // `pro` from older builds is ignored: Pro status now comes from the server.
+  for (const key of ['onboarded', 'micGranted', 'nightlyPrompt'] as const) {
     if (typeof value[key] === 'boolean') next[key] = value[key];
   }
   if (typeof value.name === 'string' && value.name.trim()) next.name = value.name.trim().slice(0, 40);
@@ -54,7 +54,7 @@ export function parseEntries(raw: string | null): Entry[] {
   return parsed.map(normalizeEntry).filter((entry): entry is Entry => entry !== null);
 }
 
-function normalizeEntry(input: unknown): Entry | null {
+export function normalizeEntry(input: unknown): Entry | null {
   if (!input || typeof input !== 'object') return null;
   const raw = input as Record<string, unknown>;
 
@@ -107,6 +107,7 @@ function normalizeEntry(input: unknown): Entry | null {
     ...(CHALLENGES.some((challenge) => challenge.id === raw.challengeId) && Number.isInteger(raw.challengeStep) && Number(raw.challengeStep) >= 0 && Number(raw.challengeStep) < 3 ? { challengeId: raw.challengeId as string, challengeStep: raw.challengeStep as number } : {}),
     ...(typeof raw.analysisModel === 'string' ? { analysisModel: raw.analysisModel } : {}),
     audioUri: typeof raw.audioUri === 'string' ? raw.audioUri : undefined,
+    ...(typeof raw.updatedAt === 'number' && Number.isFinite(raw.updatedAt) ? { updatedAt: raw.updatedAt } : {}),
   };
 }
 

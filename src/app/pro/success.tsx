@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { MascotTalk } from '@/components/Mascot';
 import { Body, Display, PrimaryButton, Screen, TopBar } from '@/components/vq';
-import { useJournal } from '@/context/journal';
+import { useAccount } from '@/context/account';
 import { useToast } from '@/context/toast';
 import { confirmProCheckout, parseCheckoutReturn } from '@/lib/payments';
 import { colors, gutter } from '@/theme';
@@ -11,27 +11,29 @@ import { colors, gutter } from '@/theme';
 export default function ProSuccess() {
   const router = useRouter();
   const params = useLocalSearchParams<Record<string, string | string[]>>();
-  const { settings, updateSettings } = useJournal();
+  const { access, refreshAccess } = useAccount();
   const { toast } = useToast();
+  // Arriving without payment details is known up front, so it is initial state, not an effect.
+  const [hasIds] = useState(() => {
+    const parsed = parseCheckoutReturn(params);
+    return !!(parsed.subscriptionId || parsed.paymentId);
+  });
   const [status, setStatus] = useState<'checking' | 'active' | 'failed'>(
-    settings.pro ? 'active' : 'checking'
+    access.pro ? 'active' : hasIds ? 'checking' : 'failed'
   );
   const [message, setMessage] = useState(
-    settings.pro ? 'Pro is already unlocked on this device.' : 'Confirming your payment…'
+    access.pro
+      ? 'Pro is already active on your account.'
+      : hasIds
+        ? 'Confirming your payment…'
+        : 'No payment details yet. Finish checkout with Dodo, or return here from the success page.'
   );
   const ran = useRef(false);
 
   useEffect(() => {
-    if (ran.current || settings.pro) return;
+    if (ran.current || access.pro || !hasIds) return;
     ran.current = true;
     const parsed = parseCheckoutReturn(params);
-    if (!parsed.subscriptionId && !parsed.paymentId) {
-      setStatus('failed');
-      setMessage(
-        'No payment details yet. Finish checkout with Dodo, or return here from the success page.'
-      );
-      return;
-    }
 
     const controller = new AbortController();
     confirmProCheckout({
@@ -43,9 +45,9 @@ export default function ProSuccess() {
       .then((result) => {
         if (controller.signal.aborted) return;
         if (result.active) {
-          updateSettings({ pro: true });
+          refreshAccess();
           setStatus('active');
-          setMessage('Welcome to VOQDO Pro. Your subscription is active on this device.');
+          setMessage('Welcome to VOQDO Pro. Your subscription is active on your account.');
           toast('VOQDO Pro unlocked');
         } else {
           setStatus('failed');
@@ -59,7 +61,7 @@ export default function ProSuccess() {
       });
 
     return () => controller.abort();
-  }, [params, settings.pro, toast, updateSettings]);
+  }, [params, access.pro, hasIds, toast, refreshAccess]);
 
   return (
     <Screen contentStyle={styles.content}>
@@ -79,8 +81,8 @@ export default function ProSuccess() {
           }
           taps={
             status === 'active'
-              ? ['Pro is unlocked on this device.', 'Habit XP stayed free the whole time.']
-              : ['Payments are confirmed securely.', 'Your journal never leaves this device for billing.']
+              ? ['Pro is active on your account.', 'It follows you to any device you sign in on.']
+              : ['Payments are confirmed securely.', 'Your journal is never sent to the payment provider.']
           }
         />
         <Display size={28}>

@@ -38,6 +38,12 @@ export const ICON_PATHS = {
   cloud: 'M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z',
   export: 'M12 15V3M7 8l5-5 5 5M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4',
   trend: 'M22 7l-8.5 8.5-5-5L2 17M16 7h6v6',
+  flame: 'M12 22c4 0 7-2.9 7-7 0-3-1.6-5.5-3.5-7.2.1 1.9-.7 3.4-2 4.2C13.8 8.6 12 5 9 2c.3 3.6-1.6 5.6-3 7.4C4.8 11 4 12.8 4 15c0 4.1 3.6 7 8 7Z',
+  shield: 'M12 22s8-3.6 8-10V5l-8-3-8 3v7c0 6.4 8 10 8 10Z',
+  gift: 'M20 12v10H4V12M2 7h20v5H2zM12 22V7M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7ZM12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7Z',
+  calendar: 'M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z',
+  trophy: 'M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4ZM17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3',
+  history: 'M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l3 2',
 } as const;
 
 export type IconName = keyof typeof ICON_PATHS;
@@ -56,7 +62,7 @@ export const CATEGORY_ICONS: Record<string, IconName> = {
 export function Icon({
   name,
   size = 18,
-  color = '#F2EDE6',
+  color = '#F6F0EA',
   strokeWidth = 1.6,
 }: {
   name: IconName;
@@ -79,7 +85,7 @@ export function Icon({
 }
 
 /** Head circle cannot be expressed in the single-path set. */
-export function UserIcon({ size = 22, color = '#F2EDE6', strokeWidth = 1.6 }) {
+export function UserIcon({ size = 22, color = '#F6F0EA', strokeWidth = 1.6 }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
       <Path
@@ -95,7 +101,7 @@ export function UserIcon({ size = 22, color = '#F2EDE6', strokeWidth = 1.6 }) {
 }
 
 /** Three ascending bars — the Insights tab and tile glyph. */
-export function ChartIcon({ size = 22, color = '#F2EDE6', strokeWidth = 1.6 }) {
+export function ChartIcon({ size = 22, color = '#F6F0EA', strokeWidth = 1.6 }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
       {[
@@ -120,7 +126,7 @@ export function ChartIcon({ size = 22, color = '#F2EDE6', strokeWidth = 1.6 }) {
 }
 
 /** Four rounded squares — the Categories tile glyph. */
-export function GridIcon({ size = 22, color = '#F2EDE6', strokeWidth = 1.6 }) {
+export function GridIcon({ size = 22, color = '#F6F0EA', strokeWidth = 1.6 }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
       {[
@@ -146,7 +152,7 @@ export function GridIcon({ size = 22, color = '#F2EDE6', strokeWidth = 1.6 }) {
 }
 
 /** Four-point star with a centre ring — the AI-categorised marker. */
-export function SparkIcon({ size = 16, color = '#F3C4A2', strokeWidth = 1.6 }) {
+export function SparkIcon({ size = 16, color = '#FFB48C', strokeWidth = 1.6 }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
       <Path

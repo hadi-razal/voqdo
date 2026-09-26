@@ -101,11 +101,11 @@ export function createAnalysisServer({
     if (url.pathname === '/webhooks/dodo' && req.method === 'POST') {
       try {
         const raw = await readRaw(req, 64_000);
-        const parsed = parseDodoWebhook(raw, req.headers);
+        const parsed = await parseDodoWebhook(raw, req.headers);
         if (!parsed.ok) return reply(400, { error: parsed.error });
         const event = parsed.payload;
         const type = String(event?.type || '');
-        // Acknowledge; local-first unlock still happens via /checkout/confirm after return.
+        // Local development only acknowledges; production applies events in the dodo-webhook Edge Function.
         if (
           type === 'subscription.active' ||
           type === 'subscription.renewed' ||
