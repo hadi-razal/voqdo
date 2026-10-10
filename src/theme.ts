@@ -65,9 +65,9 @@ export const sky = {
 
 /** Sprout's home on the dashboard — deep lavender easing into rose. */
 export const journalCard = {
-  from: '#2B2342',
-  to: '#3A2433',
-  border: 'rgba(255, 255, 255, 0.08)',
+  from: '#2F2548',
+  to: '#3F2736',
+  border: 'rgba(255, 255, 255, 0.1)',
 } as const;
 
 /** Depth on a dark page comes mostly from edges; shadows stay low and black. */

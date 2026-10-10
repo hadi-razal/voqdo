@@ -77,8 +77,10 @@ function VoqdoTabBar({ state, navigation }: TabBarProps) {
 
       <Modal visible={choosing} transparent animationType="fade" onRequestClose={() => setChoosing(false)}>
         <Pressable style={styles.scrim} onPress={() => setChoosing(false)} accessibilityLabel="Close">
-          <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 12) + 96 }]}>
+          <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 12) + 20 }]}>
+            <View style={styles.handle} />
             <Text style={styles.sheetTitle}>How do you want to journal?</Text>
+            <Text style={styles.sheetSub}>A few honest lines is plenty.</Text>
             <View style={styles.choices}>
               <Choice icon="mic" label="Speak" hint="Talk it out" tint={colors.accent} onPress={() => open('/record')} />
               <Choice icon="pencil" label="Write" hint="Type a page" tint={colors.success} onPress={() => open('/write')} />
@@ -138,12 +140,12 @@ function TabButton({
 }
 
 const styles = StyleSheet.create({
-  wrap: { backgroundColor: sky.bottom, paddingHorizontal: 14, paddingTop: 8 },
+  wrap: { backgroundColor: sky.bottom, paddingHorizontal: 14, paddingTop: 10 },
   bar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    paddingVertical: 8,
+    paddingVertical: 9,
     paddingHorizontal: 6,
     borderRadius: radius.xxl,
     backgroundColor: colors.surface,
@@ -154,34 +156,53 @@ const styles = StyleSheet.create({
   tab: { flex: 1, alignItems: 'center', gap: 3, paddingTop: 4 },
   tabLabel: { fontFamily: font.medium, fontSize: 11 },
   dot: { width: 4, height: 4, borderRadius: 2, backgroundColor: 'transparent', marginTop: 1 },
-  plusWrap: { borderRadius: 30, marginHorizontal: 6, marginTop: -26 },
+  plusWrap: { borderRadius: 32, marginHorizontal: 6, marginTop: -28 },
   plus: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 62,
+    height: 62,
+    borderRadius: 31,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 4,
     borderColor: colors.surface,
   },
   scrim: { flex: 1, backgroundColor: colors.scrim, justifyContent: 'flex-end' },
-  sheet: { paddingHorizontal: 20, gap: 14 },
-  sheetTitle: { fontFamily: font.display, fontSize: 20, color: colors.text, textAlign: 'center' },
-  choices: { flexDirection: 'row', gap: 12 },
+  sheet: {
+    marginHorizontal: 12,
+    paddingHorizontal: 18,
+    paddingTop: 10,
+    gap: 12,
+    borderRadius: radius.xxl,
+    backgroundColor: colors.surfaceRaised,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    ...shadow.lift,
+  },
+  handle: {
+    alignSelf: 'center',
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.border,
+    marginBottom: 4,
+  },
+  sheetTitle: { fontFamily: font.display, fontSize: 22, color: colors.text, textAlign: 'center', letterSpacing: -0.3 },
+  sheetSub: { fontFamily: font.body, fontSize: 13.5, color: colors.muted, textAlign: 'center', marginTop: -6 },
+  choices: { flexDirection: 'row', gap: 12, marginTop: 4, marginBottom: 8 },
   choice: {
     flex: 1,
     alignItems: 'center',
     gap: 6,
-    paddingVertical: 20,
+    paddingVertical: 22,
     borderRadius: radius.xl,
-    backgroundColor: colors.surfaceRaised,
+    backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSoft,
   },
   choiceIcon: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',

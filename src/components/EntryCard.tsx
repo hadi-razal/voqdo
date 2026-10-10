@@ -57,22 +57,22 @@ export function EntryCard({ entry, onPress }: { entry: Entry; onPress: () => voi
 }
 
 const styles = StyleSheet.create({
-  card: { padding: 14, gap: 12 },
+  card: { padding: 15, gap: 12 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   face: {
-    width: 50,
-    height: 50,
-    borderRadius: radius.md + 2,
+    width: 52,
+    height: 52,
+    borderRadius: radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  headText: { flex: 1, gap: 4 },
-  title: { fontFamily: font.display, fontSize: 17.5, lineHeight: 22, color: colors.text, letterSpacing: -0.2 },
+  headText: { flex: 1, gap: 5 },
+  title: { fontFamily: font.display, fontSize: 17.5, lineHeight: 22, color: colors.text, letterSpacing: -0.25 },
   meta: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   metaText: { fontFamily: font.medium, fontSize: 12, color: colors.faint },
   dot: { width: 4, height: 4, borderRadius: 2, marginHorizontal: 1 },
-  excerpt: { fontFamily: font.displayRegular, fontSize: 15, lineHeight: 23, color: colors.muted },
+  excerpt: { fontFamily: font.displayRegular, fontSize: 15, lineHeight: 24, color: colors.muted },
   chips: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
   more: { fontFamily: font.body, fontSize: 12, color: colors.faint },
 });
