@@ -165,6 +165,7 @@ export function Card({
     borderWidth: 1,
     borderColor: colors.cardBorder,
     borderRadius: radius.xl,
+    overflow: 'hidden',
     ...(tone === 'raised' ? null : shadow.card),
   };
 
@@ -423,9 +424,23 @@ export function ProgressBar({
       accessibilityValue={{ min: 0, max: 100, now: Math.round(pct * 100) }}
       style={{ height, borderRadius: height, backgroundColor: track, overflow: 'hidden' }}
     >
-      <View style={{ width: `${pct * 100}%`, height, borderRadius: height, backgroundColor: color }} />
+      <LinearGradient
+        colors={[color, soften(color)]}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        style={{ width: `${pct * 100}%`, height, borderRadius: height }}
+      />
     </View>
   );
+}
+
+function soften(hex: string) {
+  const n = parseInt(hex.replace('#', ''), 16);
+  if (!Number.isFinite(n)) return hex;
+  const r = Math.min(255, ((n >> 16) & 255) + 28);
+  const g = Math.min(255, ((n >> 8) & 255) + 22);
+  const b = Math.min(255, (n & 255) + 18);
+  return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
 }
 
 /** Pill toggle group, e.g. 7 days / 30 days / All time. */
@@ -525,8 +540,8 @@ export function NoteCard({
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  sectionTitle: { fontFamily: font.display, fontSize: 19, color: colors.text, letterSpacing: -0.2 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 2 },
+  sectionTitle: { fontFamily: font.display, fontSize: 20, color: colors.text, letterSpacing: -0.3 },
   sectionAction: { fontFamily: font.medium, fontSize: 13, color: colors.accent },
   chip: {
     paddingVertical: 6,

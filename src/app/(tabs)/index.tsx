@@ -109,21 +109,27 @@ export default function Home() {
         accessibilityRole="button"
         accessibilityLabel={`Sprout, ${growth.stage.name} stage, says: ${shown}. Tap for another line.`}
       >
-        <LinearGradient colors={[journalCard.from, journalCard.to]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.habitat}>
+        <LinearGradient colors={[journalCard.from, journalCard.to]} start={{ x: 0.1, y: 0 }} end={{ x: 0.95, y: 1 }} style={styles.habitat}>
+          <View style={styles.habitatGlow} />
+          <View style={styles.habitatGlowAlt} />
           <View style={styles.habitatRow}>
             <View style={styles.pedestal}>
+              <View style={styles.pedestalRing} />
               <Mascot pose={tick > 0 && tick % lines.length === 0 ? 'wink' : moment.pose} size={128} bounce={tick} />
             </View>
-            <View style={{ flex: 1, gap: 8 }}>
-              <Kicker color={colors.glow}>SPROUT · {growth.stage.name.toUpperCase()}</Kicker>
+            <View style={{ flex: 1, gap: 10 }}>
+              <View style={styles.stagePill}>
+                <Icon name="sprout" size={12} color={colors.success} strokeWidth={2.4} />
+                <Text style={styles.stagePillText}>{growth.stage.name}</Text>
+              </View>
               <View style={styles.bubble}>
                 <Text style={styles.bubbleText}>{shown}</Text>
               </View>
-              <Caption>Tap Sprout</Caption>
+              <Text style={styles.tapHint}>Tap for another line</Text>
             </View>
           </View>
-          <View style={{ gap: 7 }}>
-            <ProgressBar value={growth.pct} color={colors.success} track="rgba(255,255,255,0.1)" />
+          <View style={{ gap: 8 }}>
+            <ProgressBar value={growth.pct} color={colors.success} track="rgba(255,255,255,0.1)" height={7} />
             <Text style={styles.growthText}>
               {growth.next
                 ? `${growth.daysToNext} more journaling ${growth.daysToNext === 1 ? 'day' : 'days'} until ${growth.next.name}`
@@ -168,13 +174,13 @@ export default function Home() {
             <Icon name="refresh" size={15} color={colors.muted} strokeWidth={2} />
           </Pressable>
         </View>
-        <Display size={21}>{prompt}</Display>
+        <Display size={22} style={styles.promptText}>{prompt}</Display>
         <View style={styles.actions}>
           <Pressable
             onPress={() => router.push('/record')}
             accessibilityRole="button"
             accessibilityLabel="Speak your entry"
-            style={({ pressed }) => [styles.actionWrap, glowShadow(colors.accent, 'sm'), pressed && { transform: [{ scale: 0.97 }] }]}
+            style={({ pressed }) => [styles.actionWrap, glowShadow(colors.accent, 'md'), pressed && { transform: [{ scale: 0.97 }] }]}
           >
             <LinearGradient colors={[colors.accent, colors.accentDeep]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.action}>
               <Icon name="mic" size={19} color={colors.accentInk} strokeWidth={2.2} />
@@ -333,7 +339,7 @@ function greeting(date = new Date()): string {
 }
 
 const styles = StyleSheet.create({
-  content: { paddingHorizontal: gutter, paddingBottom: 28, gap: 16 },
+  content: { paddingHorizontal: gutter, paddingBottom: 32, gap: 18 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   greeting: { fontFamily: font.medium, fontSize: 14, color: colors.muted },
   pill: {
@@ -350,11 +356,11 @@ const styles = StyleSheet.create({
   pillLive: { borderColor: 'transparent', backgroundColor: colors.accentSoft },
   pillText: { fontFamily: font.semi, fontSize: 15, color: colors.faint },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: colors.surfaceRaised,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
@@ -364,7 +370,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingVertical: 10,
+    paddingVertical: 11,
     paddingHorizontal: 14,
     borderRadius: radius.pill,
     backgroundColor: colors.goldBg,
@@ -376,22 +382,69 @@ const styles = StyleSheet.create({
     borderRadius: radius.xxl,
     borderWidth: 1,
     borderColor: journalCard.border,
-    padding: 16,
-    gap: 14,
+    padding: 18,
+    gap: 16,
     overflow: 'hidden',
   },
-  habitatRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  pedestal: { width: 132, height: 132, alignItems: 'center', justifyContent: 'center' },
-  bubble: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: radius.lg,
-    borderTopLeftRadius: 6,
-    paddingVertical: 11,
-    paddingHorizontal: 13,
+  habitatGlow: {
+    position: 'absolute',
+    top: -40,
+    left: -20,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: 'rgba(114,219,170,0.12)',
   },
-  bubbleText: { fontFamily: font.medium, fontSize: 15, lineHeight: 21, color: colors.text },
+  habitatGlowAlt: {
+    position: 'absolute',
+    right: -30,
+    bottom: -50,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: 'rgba(182,164,255,0.1)',
+  },
+  habitatRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  pedestal: { width: 132, height: 132, alignItems: 'center', justifyContent: 'center' },
+  pedestalRing: {
+    position: 'absolute',
+    width: 118,
+    height: 118,
+    borderRadius: 59,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.04)',
+  },
+  stagePill: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: radius.pill,
+    backgroundColor: colors.successBg,
+  },
+  stagePillText: {
+    fontFamily: font.semi,
+    fontSize: 11,
+    letterSpacing: 0.6,
+    color: colors.success,
+    textTransform: 'uppercase',
+  },
+  bubble: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: radius.lg,
+    borderTopLeftRadius: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+  },
+  bubbleText: { fontFamily: font.displayItalic, fontStyle: 'italic', fontSize: 15.5, lineHeight: 22, color: colors.text },
+  tapHint: { fontFamily: font.medium, fontSize: 11.5, color: 'rgba(246,240,234,0.45)' },
   growthText: { fontFamily: font.medium, fontSize: 12.5, color: colors.muted },
-  weekCard: { padding: 16, gap: 12 },
+  weekCard: { padding: 16, gap: 13 },
   weekHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   weekTitle: { fontFamily: font.medium, fontSize: 14, color: colors.text },
   shields: { flexDirection: 'row', alignItems: 'center', gap: 5 },
@@ -401,42 +454,52 @@ const styles = StyleSheet.create({
   dayCol: { alignItems: 'center', gap: 7 },
   dayLabel: { fontFamily: font.medium, fontSize: 11.5, color: colors.faint },
   dot: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     borderWidth: 1.5,
     borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  pageCard: { padding: 18, gap: 12 },
+  pageCard: { padding: 18, gap: 14 },
   promptHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  promptText: { letterSpacing: -0.35 },
   refresh: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.wash,
   },
-  actions: { flexDirection: 'row', gap: 10, marginTop: 4 },
+  actions: { flexDirection: 'row', gap: 10, marginTop: 2 },
   actionWrap: { flex: 1, borderRadius: radius.pill },
   action: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    paddingVertical: 15,
+    paddingVertical: 16,
     borderRadius: radius.pill,
   },
   actionGhost: { borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.surface },
   actionText: { fontFamily: font.semi, fontSize: 15.5 },
   moods: { flexDirection: 'row', gap: 8 },
-  mood: { flex: 1, alignItems: 'center', gap: 4, paddingTop: 8, paddingBottom: 10, borderRadius: radius.lg },
+  mood: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 5,
+    paddingTop: 10,
+    paddingBottom: 11,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.04)',
+  },
   moodLabel: { fontFamily: font.medium, fontSize: 11.5 },
-  quests: { padding: 16, gap: 12 },
+  quests: { padding: 17, gap: 13 },
   questHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  questTitle: { fontFamily: font.display, fontSize: 19, color: colors.text },
+  questTitle: { fontFamily: font.display, fontSize: 20, color: colors.text, letterSpacing: -0.3 },
   stars: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -449,9 +512,9 @@ const styles = StyleSheet.create({
   starText: { fontFamily: font.semi, fontSize: 13.5, color: colors.gold },
   quest: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   questIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.wash,
@@ -461,11 +524,11 @@ const styles = StyleSheet.create({
   questIconDone: { backgroundColor: colors.success, borderColor: colors.success },
   questName: { fontFamily: font.medium, fontSize: 14.5, color: colors.text },
   questNameDone: { color: colors.success },
-  memory: { padding: 16, gap: 8 },
+  memory: { padding: 17, gap: 8 },
   memoryHead: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   explore: { flexDirection: 'row', gap: 10 },
   tile: { flex: 1, padding: 16, gap: 6 },
-  tileIcon: { width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
+  tileIcon: { width: 42, height: 42, borderRadius: 15, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
   tileTitle: { fontFamily: font.semi, fontSize: 15, color: colors.text },
-  countLine: { textAlign: 'center', marginTop: 2 },
+  countLine: { textAlign: 'center', marginTop: 4 },
 });
